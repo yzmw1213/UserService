@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package helloworld;
+package helloworld_grpc;
 
-option go_package = ".;helloworld";
+option go_package = ".;helloworld_grpc";
 
 service Greeter {
   rpc SayHello (HelloRequest) returns (HelloResponse);

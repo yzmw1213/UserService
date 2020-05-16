@@ -8,27 +8,28 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/yzmw1213/GoMicroApp/server/helloworld"
-	pb "github.com/yzmw1213/GoMicroApp/server/helloworld"
+	"github.com/yzmw1213/GoMicroApp/grpc/helloworld_grpc"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
-type Greeter struct{}
+type server struct{}
 
-//main make server implement interface
-func (g Greeter) Run() {
+func Run() {
 	fmt.Println("Hello")
 	lis, err := net.Listen("tcp", "0.0.0.0:50052")
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
+
+	blogServer := &server{}
+
 	opts := []grpc.ServerOption{}
 
 	s := grpc.NewServer(opts...)
 
-	// echopb.RegisterEchoServiceServer(s, &server{})
-	pb.RegisterGreeterServer(s, g)
+	helloworld_grpc.RegisterGreeterServer(s, blogServer)
 
 	// Register reflection service on gRPC server.
 	reflection.Register(s)
@@ -49,11 +50,12 @@ func (g Greeter) Run() {
 	fmt.Println("Closing the client")
 	lis.Close()
 	fmt.Println("End of Program")
+
 }
 
-func (g Greeter) SayHello(ctx context.Context, req *helloworld.HelloRequest) (*helloworld.HelloResponse, error) {
+func (s server) SayHello(ctx context.Context, req *helloworld_grpc.HelloRequest) (*helloworld_grpc.HelloResponse, error) {
 	fmt.Printf("request name is : %v\n", req.GetName())
-	return &helloworld.HelloResponse{
+	return &helloworld_grpc.HelloResponse{
 		Message: "hello " + req.Name,
 	}, nil
 }

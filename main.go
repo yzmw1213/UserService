@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/yzmw1213/GoMicroApp/server/grpc"
+	"github.com/yzmw1213/GoMicroApp/grpc"
 )
 
 func main() {
@@ -9,6 +9,5 @@ func main() {
 }
 
 func start() {
-	s := grpc.Greeter{}
-	s.Run()
+	grpc.Run()
 }

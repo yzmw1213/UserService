@@ -1,13 +1,7 @@
 #!/bin/sh
 DIR=$(cd $(dirname $0); pwd);
-SERVER_OUT_DIR="/server/helloworld";
-PROTO_PATH="protoc helloworld.proto";
-
-if [ -e $DIR$SERVER_OUT_DIR ]; then
-  break
-else
-  mkdir $DIR$SERVER_OUT_DIR
-fi
+SERVER_OUT_DIR="/grpc/helloworld_grpc";
+PROTO_PATH="grpc helloworld_grpc/helloworld.proto";
 
 # mode=grpcweb,grpcwebtextで結果が異なる
 protoc \
