@@ -8,7 +8,9 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/yzmw1213/GoMicroApp/grpc/helloworld_grpc"
+	"github.com/jinzhu/gorm"
+	"github.com/yzmw1213/GoMicroApp/db"
+	"github.com/yzmw1213/GoMicroApp/grpc/blog_grpc"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -16,7 +18,7 @@ import (
 
 type server struct{}
 
-func Run() {
+func NewBlogGrpcServer() {
 	fmt.Println("Hello")
 	lis, err := net.Listen("tcp", "0.0.0.0:50052")
 	if err != nil {
@@ -29,7 +31,7 @@ func Run() {
 
 	s := grpc.NewServer(opts...)
 
-	helloworld_grpc.RegisterGreeterServer(s, blogServer)
+	blog_grpc.RegisterBlogServiceServer(s, blogServer)
 
 	// Register reflection service on gRPC server.
 	reflection.Register(s)
@@ -53,9 +55,34 @@ func Run() {
 
 }
 
-func (s server) SayHello(ctx context.Context, req *helloworld_grpc.HelloRequest) (*helloworld_grpc.HelloResponse, error) {
-	fmt.Printf("request name is : %v\n", req.GetName())
-	return &helloworld_grpc.HelloResponse{
-		Message: "hello " + req.Name,
-	}, nil
+func (s server) CreateBlog(ctx context.Context, req *blog_grpc.CreateBlogRequest) (*blog_grpc.CreateBlogResponse, error) {
+	postData := req.GetBlog()
+	log.Println("Create Blog")
+	log.Println("Create Blog")
+	log.Printf("content of blog created: %v", postData.GetContent())
+
+	if err := db.InsDelUpdOperation(context.Background(), "insert", postData); err != nil {
+		return nil, err
+	}
+	res := &blog_grpc.CreateBlogResponse{
+		Blog: postData,
+	}
+	return res, nil
+}
+
+func (s server) ListBlog(ctx context.Context, req *blog_grpc.ListBlogRequest) (*blog_grpc.ListBlogResponse, error) {
+	FirstBlog := db.SelectFirst()
+
+	blog := &blog_grpc.Blog{
+		AuthorId: FirstBlog.AuthorId,
+	}
+
+	res := &blog_grpc.ListBlogResponse{
+		Blog: blog,
+	}
+	return res, nil
+}
+
+func GetDB() *gorm.DB {
+	return db.GetDB()
 }

@@ -1,7 +1,7 @@
 #!/bin/sh
 DIR=$(cd $(dirname $0); pwd);
-SERVER_OUT_DIR="/grpc/helloworld_grpc";
-PROTO_PATH="grpc helloworld_grpc/helloworld.proto";
+SERVER_OUT_DIR="/grpc/blog_grpc";
+PROTO_PATH="grpc blog_grpc/blog.proto";
 
 # mode=grpcweb,grpcwebtextで結果が異なる
 protoc \

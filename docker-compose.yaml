@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+
+  db:
+    image: mysql:latest
+    container_name: mysql_host
+    hostname: db_host
+    ports:
+      - "3306:3306"
+    # 初期設定
+    volumes: 
+      - "./docker/mysql/my.conf:/etc/mysql/my.conf"
+    # 環境変数
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: db
+      MYSQL_USER: yzmw1213
+      MYSQL_PASSWORD: root
