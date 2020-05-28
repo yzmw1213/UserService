@@ -74,20 +74,6 @@ func (s server) CreateBlog(ctx context.Context, req *blog_grpc.CreateBlogRequest
 	}
 	return res, nil
 }
-
-func (s server) ListBlog(ctx context.Context, req *blog_grpc.ListBlogRequest) (*blog_grpc.ListBlogResponse, error) {
-	FirstBlog := db.SelectFirst()
-
-	blog := &blog_grpc.Blog{
-		AuthorId: FirstBlog.AuthorId,
-	}
-
-	res := &blog_grpc.ListBlogResponse{
-		Blog: blog,
-	}
-	return res, nil
-}
-
 func GetDB() *gorm.DB {
 	return db.GetDB()
 }

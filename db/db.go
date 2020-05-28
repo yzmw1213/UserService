@@ -62,9 +62,3 @@ func InsDelUpdOperation(ctx context.Context, op string, postData *model.Blog) er
 	return nil
 
 }
-
-func SelectFirst() model.Blog {
-	blog := model.Blog{}
-	GetDB().First(blog)
-	return blog
-}
