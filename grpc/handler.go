@@ -10,13 +10,17 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/yzmw1213/GoMicroApp/db"
+	"github.com/yzmw1213/GoMicroApp/domain/model"
 	"github.com/yzmw1213/GoMicroApp/grpc/blog_grpc"
+	"github.com/yzmw1213/GoMicroApp/usecase/interactor"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
-type server struct{}
+type server struct {
+	Usecase interactor.BlogInteractor
+}
 
 func NewBlogGrpcServer() {
 	fmt.Println("Hello")
@@ -57,11 +61,12 @@ func NewBlogGrpcServer() {
 
 func (s server) CreateBlog(ctx context.Context, req *blog_grpc.CreateBlogRequest) (*blog_grpc.CreateBlogResponse, error) {
 	postData := req.GetBlog()
-	log.Println("Create Blog")
-	log.Println("Create Blog")
-	log.Printf("content of blog created: %v", postData.GetContent())
-
-	if err := db.InsDelUpdOperation(context.Background(), "insert", postData); err != nil {
+	blog := &model.Blog{
+		AuthorId: postData.GetAuthorId(),
+		Title:    postData.GetTitle(),
+		Content:  postData.GetContent(),
+	}
+	if err := s.Usecase.CreateBlog(blog); err != nil {
 		return nil, err
 	}
 	res := &blog_grpc.CreateBlogResponse{

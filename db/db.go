@@ -3,11 +3,9 @@ package db
 import (
 	"context"
 	"fmt"
-	"log"
 
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/yzmw1213/GoMicroApp/domain/model"
-	"github.com/yzmw1213/GoMicroApp/grpc/blog_grpc"
 
 	"github.com/jinzhu/gorm"
 )
@@ -18,16 +16,7 @@ var (
 
 func initDB() {
 	var err error
-	// env, err := godotenv.Read()
 	DBMS := "mysql"
-	// DB_USER := env["DB_USER"]
-	// DB_PASS := env["DB_PASS"]
-	// DB_ADRESS := env["DB_ADRESS"]
-	// DB_NAME := env["DB_NAME"]
-	// PROTOCOL := fmt.Sprintf("tcp(%s)", DB_ADRESS)
-	// DB_NAME := os.Getenv("DB_NAME")
-	// DB_OPTION := "?charset=utf8mb4&parseTime=True&loc=Local"
-	// CONNECTION := fmt.Sprintf("%s:%s@%s/%s%s", DB_USER, DB_PASS, PROTOCOL, DB_NAME, DB_OPTION)
 	CONNECTION := "yzmw1213:root@tcp(localhost)/db?charset=utf8mb4&parseTime=True&loc=Local"
 
 	DB, err = gorm.Open(DBMS, CONNECTION)
@@ -61,21 +50,12 @@ func autoMigration() {
 	}
 }
 
-func InsDelUpdOperation(ctx context.Context, op string, postData *blog_grpc.Blog) error {
-	blog := &model.Blog{
-		AuthorId: postData.GetAuthorId(),
-		Title:    postData.GetTitle(),
-		Content:  postData.GetContent(),
-	}
-	log.Printf("inserting blog AuthorId: %v\n", blog.AuthorId)
-	log.Printf("inserting blog Title: %v\n", blog.Title)
-	log.Printf("inserting blog Content: %v\n", blog.Content)
-	log.Printf("op :%v", op)
+func InsDelUpdOperation(ctx context.Context, op string, postData *model.Blog) error {
 	initDB()
 
 	switch op {
 	case "insert":
-		if err := DB.Create(blog).Error; err != nil {
+		if err := DB.Create(postData).Error; err != nil {
 			return err
 		}
 	}
