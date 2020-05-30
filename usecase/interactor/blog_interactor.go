@@ -35,6 +35,21 @@ func (b *BlogInteractor) CreateBlog(postData *model.Blog) error {
 	return nil
 }
 
+func (b *BlogInteractor) Update(inputBlog *model.Blog) error {
+	if err := db.InsDelUpdOperation(context.Background(), "update", inputBlog); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (b *BlogInteractor) UpdateBlog(postData *model.Blog) error {
+	var err error
+
+	if err = b.Update(postData); err != nil {
+		return err
+	}
+
+	return nil
 func (b *BlogInteractor) List() ([]model.Blog, error) {
 	var blogList []model.Blog
 	rows, err := db.ListAll(context.Background())

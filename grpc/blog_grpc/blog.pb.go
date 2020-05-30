@@ -607,12 +607,20 @@ var file_blog_grpc_blog_proto_rawDesc = []byte{
 	0x4c, 0x69, 0x73, 0x74, 0x42, 0x6c, 0x6f, 0x67, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
 	0x12, 0x23, 0x0a, 0x04, 0x62, 0x6c, 0x6f, 0x67, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0f,
 	0x2e, 0x62, 0x6c, 0x6f, 0x67, 0x5f, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x6c, 0x6f, 0x67, 0x52,
+	0x04, 0x62, 0x6c, 0x6f, 0x67, 0x32, 0xa3, 0x01, 0x0a, 0x0b, 0x42, 0x6c, 0x6f, 0x67, 0x53, 0x65,
 	0x04, 0x62, 0x6c, 0x6f, 0x67, 0x32, 0x9f, 0x01, 0x0a, 0x0b, 0x42, 0x6c, 0x6f, 0x67, 0x53, 0x65,
 	0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x49, 0x0a, 0x0a, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x42,
 	0x6c, 0x6f, 0x67, 0x12, 0x1c, 0x2e, 0x62, 0x6c, 0x6f, 0x67, 0x5f, 0x67, 0x72, 0x70, 0x63, 0x2e,
 	0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x42, 0x6c, 0x6f, 0x67, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
 	0x74, 0x1a, 0x1d, 0x2e, 0x62, 0x6c, 0x6f, 0x67, 0x5f, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x43, 0x72,
 	0x65, 0x61, 0x74, 0x65, 0x42, 0x6c, 0x6f, 0x67, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x12, 0x49, 0x0a, 0x0a, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x42, 0x6c, 0x6f, 0x67, 0x12, 0x1c,
+	0x2e, 0x62, 0x6c, 0x6f, 0x67, 0x5f, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74,
+	0x65, 0x42, 0x6c, 0x6f, 0x67, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1d, 0x2e, 0x62,
+	0x6c, 0x6f, 0x67, 0x5f, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x42,
+	0x6c, 0x6f, 0x67, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x0d, 0x5a, 0x0b, 0x2e,
+	0x3b, 0x62, 0x6c, 0x6f, 0x67, 0x5f, 0x67, 0x72, 0x70, 0x63, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x33,
 	0x12, 0x45, 0x0a, 0x08, 0x4c, 0x69, 0x73, 0x74, 0x42, 0x6c, 0x6f, 0x67, 0x12, 0x1a, 0x2e, 0x62,
 	0x6c, 0x6f, 0x67, 0x5f, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x42, 0x6c, 0x6f,
 	0x67, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1b, 0x2e, 0x62, 0x6c, 0x6f, 0x67, 0x5f,
@@ -658,6 +666,9 @@ var file_blog_grpc_blog_proto_depIdxs = []int32{
 	0,  // 7: blog_grpc.DeleteBlogResponse.blog:type_name -> blog_grpc.Blog
 	0,  // 8: blog_grpc.ListBlogResponse.blog:type_name -> blog_grpc.Blog
 	1,  // 9: blog_grpc.BlogService.CreateBlog:input_type -> blog_grpc.CreateBlogRequest
+	5,  // 10: blog_grpc.BlogService.UpdateBlog:input_type -> blog_grpc.UpdateBlogRequest
+	2,  // 11: blog_grpc.BlogService.CreateBlog:output_type -> blog_grpc.CreateBlogResponse
+	6,  // 12: blog_grpc.BlogService.UpdateBlog:output_type -> blog_grpc.UpdateBlogResponse
 	9,  // 10: blog_grpc.BlogService.ListBlog:input_type -> blog_grpc.ListBlogRequest
 	2,  // 11: blog_grpc.BlogService.CreateBlog:output_type -> blog_grpc.CreateBlogResponse
 	10, // 12: blog_grpc.BlogService.ListBlog:output_type -> blog_grpc.ListBlogResponse
@@ -841,6 +852,7 @@ const _ = grpc.SupportPackageIsVersion6
 type BlogServiceClient interface {
 	CreateBlog(ctx context.Context, in *CreateBlogRequest, opts ...grpc.CallOption) (*CreateBlogResponse, error)
 	// rpc ReadBlog(ReadBlogRequest) returns (ReadBlogResponse);
+	UpdateBlog(ctx context.Context, in *UpdateBlogRequest, opts ...grpc.CallOption) (*UpdateBlogResponse, error)
 	// rpc UpdateBlog(UpdateBlogRequest) returns (UpdateBlogResponse);
 	// rpc DeleteBlog(DeleteBlogRequest) returns (DeleteBlogResponse);
 	ListBlog(ctx context.Context, in *ListBlogRequest, opts ...grpc.CallOption) (BlogService_ListBlogClient, error)
@@ -863,6 +875,13 @@ func (c *blogServiceClient) CreateBlog(ctx context.Context, in *CreateBlogReques
 	return out, nil
 }
 
+func (c *blogServiceClient) UpdateBlog(ctx context.Context, in *UpdateBlogRequest, opts ...grpc.CallOption) (*UpdateBlogResponse, error) {
+	out := new(UpdateBlogResponse)
+	err := c.cc.Invoke(ctx, "/blog_grpc.BlogService/UpdateBlog", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 func (c *blogServiceClient) ListBlog(ctx context.Context, in *ListBlogRequest, opts ...grpc.CallOption) (BlogService_ListBlogClient, error) {
 	stream, err := c.cc.NewStream(ctx, &_BlogService_serviceDesc.Streams[0], "/blog_grpc.BlogService/ListBlog", opts...)
 	if err != nil {
@@ -899,6 +918,7 @@ func (x *blogServiceListBlogClient) Recv() (*ListBlogResponse, error) {
 type BlogServiceServer interface {
 	CreateBlog(context.Context, *CreateBlogRequest) (*CreateBlogResponse, error)
 	// rpc ReadBlog(ReadBlogRequest) returns (ReadBlogResponse);
+	UpdateBlog(context.Context, *UpdateBlogRequest) (*UpdateBlogResponse, error)
 	// rpc UpdateBlog(UpdateBlogRequest) returns (UpdateBlogResponse);
 	// rpc DeleteBlog(DeleteBlogRequest) returns (DeleteBlogResponse);
 	ListBlog(*ListBlogRequest, BlogService_ListBlogServer) error
@@ -911,6 +931,8 @@ type UnimplementedBlogServiceServer struct {
 func (*UnimplementedBlogServiceServer) CreateBlog(context.Context, *CreateBlogRequest) (*CreateBlogResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateBlog not implemented")
 }
+func (*UnimplementedBlogServiceServer) UpdateBlog(context.Context, *UpdateBlogRequest) (*UpdateBlogResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateBlog not implemented")
 func (*UnimplementedBlogServiceServer) ListBlog(*ListBlogRequest, BlogService_ListBlogServer) error {
 	return status.Errorf(codes.Unimplemented, "method ListBlog not implemented")
 }
@@ -937,6 +959,22 @@ func _BlogService_CreateBlog_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BlogService_UpdateBlog_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateBlogRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BlogServiceServer).UpdateBlog(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/blog_grpc.BlogService/UpdateBlog",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BlogServiceServer).UpdateBlog(ctx, req.(*UpdateBlogRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 func _BlogService_ListBlog_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(ListBlogRequest)
 	if err := stream.RecvMsg(m); err != nil {
@@ -965,6 +1003,10 @@ var _BlogService_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateBlog",
 			Handler:    _BlogService_CreateBlog_Handler,
+		},
+		{
+			MethodName: "UpdateBlog",
+			Handler:    _BlogService_UpdateBlog_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

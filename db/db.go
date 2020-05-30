@@ -13,7 +13,8 @@ import (
 )
 
 var (
-	DB *gorm.DB
+	DB   *gorm.DB
+	blog model.Blog
 )
 
 func initDB() {
@@ -58,6 +59,10 @@ func InsDelUpdOperation(ctx context.Context, op string, postData *model.Blog) er
 	switch op {
 	case "insert":
 		if err := DB.Create(postData).Error; err != nil {
+			return err
+		}
+	case "update":
+		if err := DB.Model(&blog).Updates(postData).Error; err != nil {
 			return err
 		}
 	}
