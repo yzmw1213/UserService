@@ -82,6 +82,7 @@ func (s server) ListBlog(req *blog_grpc.ListBlogRequest, stream blog_grpc.BlogSe
 	}
 	for _, blog := range rows {
 		blog := &blog_grpc.Blog{
+			BlogId:   blog.BlogId,
 			AuthorId: blog.AuthorId,
 			Title:    blog.Title,
 			Content:  blog.Content,
