@@ -85,6 +85,7 @@ func (s server) DeleteBlog(ctx context.Context, req *blog_grpc.DeleteBlogRequest
 	}
 	res := &blog_grpc.DeleteBlogResponse{}
 	return res, nil
+}
 func (s server) ListBlog(req *blog_grpc.ListBlogRequest, stream blog_grpc.BlogService_ListBlogServer) error {
 	rows, err := s.Usecase.ListBlog()
 	if err != nil {
