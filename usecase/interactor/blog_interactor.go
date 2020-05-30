@@ -66,3 +66,20 @@ func (b *BlogInteractor) List() ([]model.Blog, error) {
 func (b *BlogInteractor) ListBlog() ([]model.Blog, error) {
 	return b.List()
 }
+
+func (b *BlogInteractor) Update(inputBlog *model.Blog) error {
+	if err := db.InsDelUpdOperation(context.Background(), "update", inputBlog); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (b *BlogInteractor) UpdateBlog(postData *model.Blog) error {
+	var err error
+
+	if err = b.Update(postData); err != nil {
+		return err
+	}
+
+	return nil
+}
