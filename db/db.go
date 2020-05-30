@@ -77,7 +77,7 @@ func Delete(ctx context.Context, postData *model.Blog) error {
 		return err
 	}
 	return nil
-
+}
 func ListAll(ctx context.Context) ([]model.Blog, error) {
 	initDB()
 	var blog model.Blog
