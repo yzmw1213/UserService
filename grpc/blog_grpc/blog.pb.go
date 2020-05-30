@@ -607,14 +607,18 @@ var file_blog_grpc_blog_proto_rawDesc = []byte{
 	0x4c, 0x69, 0x73, 0x74, 0x42, 0x6c, 0x6f, 0x67, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
 	0x12, 0x23, 0x0a, 0x04, 0x62, 0x6c, 0x6f, 0x67, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0f,
 	0x2e, 0x62, 0x6c, 0x6f, 0x67, 0x5f, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x42, 0x6c, 0x6f, 0x67, 0x52,
-	0x04, 0x62, 0x6c, 0x6f, 0x67, 0x32, 0x58, 0x0a, 0x0b, 0x42, 0x6c, 0x6f, 0x67, 0x53, 0x65, 0x72,
-	0x76, 0x69, 0x63, 0x65, 0x12, 0x49, 0x0a, 0x0a, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x42, 0x6c,
-	0x6f, 0x67, 0x12, 0x1c, 0x2e, 0x62, 0x6c, 0x6f, 0x67, 0x5f, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x43,
-	0x72, 0x65, 0x61, 0x74, 0x65, 0x42, 0x6c, 0x6f, 0x67, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x1a, 0x1d, 0x2e, 0x62, 0x6c, 0x6f, 0x67, 0x5f, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x43, 0x72, 0x65,
-	0x61, 0x74, 0x65, 0x42, 0x6c, 0x6f, 0x67, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42,
-	0x0d, 0x5a, 0x0b, 0x2e, 0x3b, 0x62, 0x6c, 0x6f, 0x67, 0x5f, 0x67, 0x72, 0x70, 0x63, 0x62, 0x06,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x04, 0x62, 0x6c, 0x6f, 0x67, 0x32, 0x9f, 0x01, 0x0a, 0x0b, 0x42, 0x6c, 0x6f, 0x67, 0x53, 0x65,
+	0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x49, 0x0a, 0x0a, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x42,
+	0x6c, 0x6f, 0x67, 0x12, 0x1c, 0x2e, 0x62, 0x6c, 0x6f, 0x67, 0x5f, 0x67, 0x72, 0x70, 0x63, 0x2e,
+	0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x42, 0x6c, 0x6f, 0x67, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x1a, 0x1d, 0x2e, 0x62, 0x6c, 0x6f, 0x67, 0x5f, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x43, 0x72,
+	0x65, 0x61, 0x74, 0x65, 0x42, 0x6c, 0x6f, 0x67, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x12, 0x45, 0x0a, 0x08, 0x4c, 0x69, 0x73, 0x74, 0x42, 0x6c, 0x6f, 0x67, 0x12, 0x1a, 0x2e, 0x62,
+	0x6c, 0x6f, 0x67, 0x5f, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x42, 0x6c, 0x6f,
+	0x67, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1b, 0x2e, 0x62, 0x6c, 0x6f, 0x67, 0x5f,
+	0x67, 0x72, 0x70, 0x63, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x42, 0x6c, 0x6f, 0x67, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x30, 0x01, 0x42, 0x0d, 0x5a, 0x0b, 0x2e, 0x3b, 0x62, 0x6c, 0x6f,
+	0x67, 0x5f, 0x67, 0x72, 0x70, 0x63, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -654,9 +658,11 @@ var file_blog_grpc_blog_proto_depIdxs = []int32{
 	0,  // 7: blog_grpc.DeleteBlogResponse.blog:type_name -> blog_grpc.Blog
 	0,  // 8: blog_grpc.ListBlogResponse.blog:type_name -> blog_grpc.Blog
 	1,  // 9: blog_grpc.BlogService.CreateBlog:input_type -> blog_grpc.CreateBlogRequest
-	2,  // 10: blog_grpc.BlogService.CreateBlog:output_type -> blog_grpc.CreateBlogResponse
-	10, // [10:11] is the sub-list for method output_type
-	9,  // [9:10] is the sub-list for method input_type
+	9,  // 10: blog_grpc.BlogService.ListBlog:input_type -> blog_grpc.ListBlogRequest
+	2,  // 11: blog_grpc.BlogService.CreateBlog:output_type -> blog_grpc.CreateBlogResponse
+	10, // 12: blog_grpc.BlogService.ListBlog:output_type -> blog_grpc.ListBlogResponse
+	11, // [11:13] is the sub-list for method output_type
+	9,  // [9:11] is the sub-list for method input_type
 	9,  // [9:9] is the sub-list for extension type_name
 	9,  // [9:9] is the sub-list for extension extendee
 	0,  // [0:9] is the sub-list for field type_name
@@ -834,6 +840,10 @@ const _ = grpc.SupportPackageIsVersion6
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type BlogServiceClient interface {
 	CreateBlog(ctx context.Context, in *CreateBlogRequest, opts ...grpc.CallOption) (*CreateBlogResponse, error)
+	// rpc ReadBlog(ReadBlogRequest) returns (ReadBlogResponse);
+	// rpc UpdateBlog(UpdateBlogRequest) returns (UpdateBlogResponse);
+	// rpc DeleteBlog(DeleteBlogRequest) returns (DeleteBlogResponse);
+	ListBlog(ctx context.Context, in *ListBlogRequest, opts ...grpc.CallOption) (BlogService_ListBlogClient, error)
 }
 
 type blogServiceClient struct {
@@ -853,9 +863,45 @@ func (c *blogServiceClient) CreateBlog(ctx context.Context, in *CreateBlogReques
 	return out, nil
 }
 
+func (c *blogServiceClient) ListBlog(ctx context.Context, in *ListBlogRequest, opts ...grpc.CallOption) (BlogService_ListBlogClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_BlogService_serviceDesc.Streams[0], "/blog_grpc.BlogService/ListBlog", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &blogServiceListBlogClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type BlogService_ListBlogClient interface {
+	Recv() (*ListBlogResponse, error)
+	grpc.ClientStream
+}
+
+type blogServiceListBlogClient struct {
+	grpc.ClientStream
+}
+
+func (x *blogServiceListBlogClient) Recv() (*ListBlogResponse, error) {
+	m := new(ListBlogResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // BlogServiceServer is the server API for BlogService service.
 type BlogServiceServer interface {
 	CreateBlog(context.Context, *CreateBlogRequest) (*CreateBlogResponse, error)
+	// rpc ReadBlog(ReadBlogRequest) returns (ReadBlogResponse);
+	// rpc UpdateBlog(UpdateBlogRequest) returns (UpdateBlogResponse);
+	// rpc DeleteBlog(DeleteBlogRequest) returns (DeleteBlogResponse);
+	ListBlog(*ListBlogRequest, BlogService_ListBlogServer) error
 }
 
 // UnimplementedBlogServiceServer can be embedded to have forward compatible implementations.
@@ -864,6 +910,9 @@ type UnimplementedBlogServiceServer struct {
 
 func (*UnimplementedBlogServiceServer) CreateBlog(context.Context, *CreateBlogRequest) (*CreateBlogResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateBlog not implemented")
+}
+func (*UnimplementedBlogServiceServer) ListBlog(*ListBlogRequest, BlogService_ListBlogServer) error {
+	return status.Errorf(codes.Unimplemented, "method ListBlog not implemented")
 }
 
 func RegisterBlogServiceServer(s *grpc.Server, srv BlogServiceServer) {
@@ -888,6 +937,27 @@ func _BlogService_CreateBlog_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BlogService_ListBlog_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(ListBlogRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(BlogServiceServer).ListBlog(m, &blogServiceListBlogServer{stream})
+}
+
+type BlogService_ListBlogServer interface {
+	Send(*ListBlogResponse) error
+	grpc.ServerStream
+}
+
+type blogServiceListBlogServer struct {
+	grpc.ServerStream
+}
+
+func (x *blogServiceListBlogServer) Send(m *ListBlogResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 var _BlogService_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "blog_grpc.BlogService",
 	HandlerType: (*BlogServiceServer)(nil),
@@ -897,6 +967,12 @@ var _BlogService_serviceDesc = grpc.ServiceDesc{
 			Handler:    _BlogService_CreateBlog_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "ListBlog",
+			Handler:       _BlogService_ListBlog_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "blog_grpc/blog.proto",
 }

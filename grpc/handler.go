@@ -74,6 +74,31 @@ func (s server) CreateBlog(ctx context.Context, req *blog_grpc.CreateBlogRequest
 	}
 	return res, nil
 }
+
+func (s server) ListBlog(req *blog_grpc.ListBlogRequest, stream blog_grpc.BlogService_ListBlogServer) error {
+	rows, err := s.Usecase.ListBlog()
+	if err != nil {
+		return err
+	}
+	for _, blog := range rows {
+		blog := &blog_grpc.Blog{
+			BlogId:   blog.BlogId,
+			AuthorId: blog.AuthorId,
+			Title:    blog.Title,
+			Content:  blog.Content,
+		}
+		res := &blog_grpc.ListBlogResponse{
+			Blog: blog,
+		}
+		sendErr := stream.Send(res)
+		if sendErr != nil {
+			log.Fatalf("Error while sending response to client :%v", sendErr)
+			return sendErr
+		}
+	}
+
+	return nil
+}
 func GetDB() *gorm.DB {
 	return db.GetDB()
 }
