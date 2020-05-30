@@ -2,7 +2,9 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"log"
 
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/yzmw1213/GoMicroApp/domain/model"
@@ -66,4 +68,23 @@ func InsDelUpdOperation(ctx context.Context, op string, postData *model.Blog) er
 	}
 	return nil
 
+}
+
+func ListAll(ctx context.Context) ([]model.Blog, error) {
+	initDB()
+	var blog model.Blog
+	var blogs []model.Blog
+	var rows *sql.Rows
+
+	rows, err := DB.Find(&blogs).Rows()
+	if err != nil {
+		log.Println("Error occured")
+		return nil, err
+	}
+
+	for rows.Next() {
+		DB.ScanRows(rows, &blog)
+		blogs = append(blogs, blog)
+	}
+	return blogs, nil
 }

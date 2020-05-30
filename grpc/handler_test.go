@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"io"
 	"log"
 	"net"
 	"testing"
@@ -110,4 +111,32 @@ func TestGetDB(t *testing.T) {
 		t.Fatal("db does not have table named 'blogs'")
 	}
 
+}
+
+func TestListBlog(t *testing.T) {
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+
+	client := blog_grpc.NewBlogServiceClient(conn)
+
+	req := &blog_grpc.ListBlogRequest{}
+	stream, err := client.ListBlog(ctx, req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for {
+		_, err = stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatalf("something happened while listing blog: %v", err)
+		}
+	}
+
+	t.Log("finished TestListBlog")
 }
