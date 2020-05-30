@@ -17,6 +17,7 @@ const bufSize = 1024 * 1024
 
 var lis *bufconn.Listener
 var err error
+var blogs []*blog_grpc.Blog
 
 func init() {
 	lis = bufconn.Listen(bufSize)
