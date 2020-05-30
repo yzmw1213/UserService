@@ -70,6 +70,14 @@ func InsDelUpdOperation(ctx context.Context, op string, postData *model.Blog) er
 
 }
 
+func Delete(ctx context.Context, postData *model.Blog) error {
+	initDB()
+
+	if err := DB.Delete(postData).Error; err != nil {
+		return err
+	}
+	return nil
+
 func ListAll(ctx context.Context) ([]model.Blog, error) {
 	initDB()
 	var blog model.Blog

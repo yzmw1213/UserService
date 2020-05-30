@@ -75,20 +75,15 @@ func (s server) CreateBlog(ctx context.Context, req *blog_grpc.CreateBlogRequest
 	return res, nil
 }
 
-func (s server) UpdateBlog(ctx context.Context, req *blog_grpc.UpdateBlogRequest) (*blog_grpc.UpdateBlogResponse, error) {
-	postData := req.GetBlog()
+func (s server) DeleteBlog(ctx context.Context, req *blog_grpc.DeleteBlogRequest) (*blog_grpc.DeleteBlogResponse, error) {
+	postData := req.GetBlogId()
 	blog := &model.Blog{
-		BlogId:   postData.GetBlogId(),
-		AuthorId: postData.GetAuthorId(),
-		Title:    postData.GetTitle(),
-		Content:  postData.GetContent(),
+		BlogId: postData,
 	}
-	if err := s.Usecase.UpdateBlog(blog); err != nil {
+	if err := s.Usecase.DeleteBlog(blog); err != nil {
 		return nil, err
 	}
-	res := &blog_grpc.UpdateBlogResponse{
-		Blog: postData,
-	}
+	res := &blog_grpc.DeleteBlogResponse{}
 	return res, nil
 }
 func (s server) ListBlog(req *blog_grpc.ListBlogRequest, stream blog_grpc.BlogService_ListBlogServer) error {

@@ -62,7 +62,7 @@ func TestCreateBlog(t *testing.T) {
 	t.Log("finished TestCreateBlog")
 }
 
-func TestUpdateBlog(t *testing.T) {
+func TestDeleteBlog(t *testing.T) {
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
@@ -72,31 +72,18 @@ func TestUpdateBlog(t *testing.T) {
 
 	client := blog_grpc.NewBlogServiceClient(conn)
 
-	blogs = append(blogs, &blog_grpc.Blog{
-		BlogId:   1,
-		AuthorId: 1234567890,
-	})
-	blogs = append(blogs, &blog_grpc.Blog{
-		BlogId: 2,
-		Title:  "Title (Updated)",
-	})
-	blogs = append(blogs, &blog_grpc.Blog{
-		BlogId:  3,
-		Content: "Content (Updated)",
-	})
+	var deleteBlogId int32 = 16
 
-	for _, blog := range blogs {
-		req := &blog_grpc.UpdateBlogRequest{
-			Blog: blog,
-		}
-		_, err = client.UpdateBlog(ctx, req)
-
-		if err != nil {
-			t.Fatalf("error occured testing UpdateBlog: %v\n", err)
-		}
+	req := &blog_grpc.DeleteBlogRequest{
+		BlogId: deleteBlogId,
 	}
 
-	t.Log("finished TestUpdateBlog")
+	_, err = client.DeleteBlog(ctx, req)
+
+	if err != nil {
+		t.Fatalf("error occured testing DeleteBlog: %v\n", err)
+	}
+	t.Log("finished TestDeleteBlog")
 }
 
 func TestGetDB(t *testing.T) {
