@@ -110,6 +110,24 @@ func (s server) ListBlog(req *blog_grpc.ListBlogRequest, stream blog_grpc.BlogSe
 
 	return nil
 }
+
+func (s server) UpdateBlog(ctx context.Context, req *blog_grpc.UpdateBlogRequest) (*blog_grpc.UpdateBlogResponse, error) {
+	postData := req.GetBlog()
+	blog := &model.Blog{
+		BlogId:   postData.GetBlogId(),
+		AuthorId: postData.GetAuthorId(),
+		Title:    postData.GetTitle(),
+		Content:  postData.GetContent(),
+	}
+	if err := s.Usecase.UpdateBlog(blog); err != nil {
+		return nil, err
+	}
+	res := &blog_grpc.UpdateBlogResponse{
+		Blog: postData,
+	}
+	return res, nil
+}
+
 func GetDB() *gorm.DB {
 	return db.GetDB()
 }
