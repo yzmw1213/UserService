@@ -1,10 +1,12 @@
 package model
 
-import "github.com/jinzhu/gorm"
+import "time"
 
 type Blog struct {
-	gorm.Model
-	AuthorId int32
-	Title    string
-	Content  string
+	BlogId    int32 `gorm:"primary_key"`
+	AuthorId  int32
+	Title     string
+	Content   string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
