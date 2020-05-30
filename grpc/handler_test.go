@@ -60,6 +60,30 @@ func TestCreateBlog(t *testing.T) {
 	t.Log("finished TestCreateBlog")
 }
 
+func TestDeleteBlog(t *testing.T) {
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+
+	client := blog_grpc.NewBlogServiceClient(conn)
+
+	var deleteBlogId int32 = 16
+
+	req := &blog_grpc.DeleteBlogRequest{
+		BlogId: deleteBlogId,
+	}
+
+	_, err = client.DeleteBlog(ctx, req)
+
+	if err != nil {
+		t.Fatalf("error occured testing DeleteBlog: %v\n", err)
+	}
+	t.Log("finished TestDeleteBlog")
+}
+
 func TestGetDB(t *testing.T) {
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())

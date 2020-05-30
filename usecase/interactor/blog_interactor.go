@@ -32,3 +32,18 @@ func (b *BlogInteractor) CreateBlog(postData *model.Blog) error {
 
 	return nil
 }
+
+func (b *BlogInteractor) Delete(inputBlog *model.Blog) error {
+	if err := db.Delete(context.Background(), inputBlog); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (b *BlogInteractor) DeleteBlog(postData *model.Blog) error {
+	var err error
+	if err = b.Delete(postData); err != nil {
+		return err
+	}
+	return nil
+}

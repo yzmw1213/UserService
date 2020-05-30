@@ -74,6 +74,18 @@ func (s server) CreateBlog(ctx context.Context, req *blog_grpc.CreateBlogRequest
 	}
 	return res, nil
 }
+
+func (s server) DeleteBlog(ctx context.Context, req *blog_grpc.DeleteBlogRequest) (*blog_grpc.DeleteBlogResponse, error) {
+	postData := req.GetBlogId()
+	blog := &model.Blog{
+		BlogId: postData,
+	}
+	if err := s.Usecase.DeleteBlog(blog); err != nil {
+		return nil, err
+	}
+	res := &blog_grpc.DeleteBlogResponse{}
+	return res, nil
+}
 func GetDB() *gorm.DB {
 	return db.GetDB()
 }
