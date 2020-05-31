@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/yzmw1213/GoMicroApp/db"
 	"github.com/yzmw1213/GoMicroApp/domain/model"
 	"github.com/yzmw1213/GoMicroApp/grpc/blog_grpc"
 	"google.golang.org/grpc"
@@ -83,6 +84,14 @@ func TestDeleteBlog(t *testing.T) {
 
 	if err != nil {
 		t.Fatalf("error occured testing DeleteBlog: %v\n", err)
+	}
+
+	blog := &model.Blog{
+		BlogId: deleteBlogId,
+	}
+
+	if !db.DB.First(&blog).RecordNotFound() {
+		t.Fatal("The blog specified was not deleted")
 	}
 	t.Log("finished TestDeleteBlog")
 }
