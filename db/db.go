@@ -13,8 +13,9 @@ import (
 )
 
 var (
-	DB   *gorm.DB
-	blog model.Blog
+	DB        *gorm.DB
+	blog      model.Blog
+	tableName string = "blogs"
 )
 
 func initDB() {
@@ -78,6 +79,20 @@ func Delete(ctx context.Context, postData *model.Blog) error {
 	}
 	return nil
 }
+
+func Read(ctx context.Context, blogId int32) (model.Blog, error) {
+	initDB()
+	var blog model.Blog
+
+	row := DB.First(&blog, blogId)
+	if err := row.Error; err != nil {
+		log.Printf("Error happend while Read for blogid: %v\n", blogId)
+		return model.Blog{}, err
+	}
+	DB.Table(tableName).Scan(row)
+	return blog, nil
+}
+
 func ListAll(ctx context.Context) ([]model.Blog, error) {
 	initDB()
 	var blog model.Blog

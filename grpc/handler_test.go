@@ -7,6 +7,7 @@ import (
 	"net"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/yzmw1213/GoMicroApp/domain/model"
 	"github.com/yzmw1213/GoMicroApp/grpc/blog_grpc"
 	"google.golang.org/grpc"
@@ -108,21 +109,20 @@ func TestUpdateBlog(t *testing.T) {
 	}
 	defer conn.Close()
 
-	client := blog_grpc.NewBlogServiceClient(conn)
-
-	blogs = append(blogs, &blog_grpc.Blog{
-		BlogId:   1,
+	updateBlog := &model.Blog{
+		BlogId:   4,
 		AuthorId: 1234567890,
-	})
-	blogs = append(blogs, &blog_grpc.Blog{
-		BlogId: 2,
-		Title:  "Title (Updated)",
-	})
-	blogs = append(blogs, &blog_grpc.Blog{
-		BlogId:  3,
-		Content: "Content (Updated)",
-	})
+		Title:    "Updated Title",
+		Content:  "Updated Content",
+	}
 
+	client := blog_grpc.NewBlogServiceClient(conn)
+	blogs = append(blogs, &blog_grpc.Blog{
+		BlogId:   updateBlog.BlogId,
+		AuthorId: updateBlog.AuthorId,
+		Title:    updateBlog.Title,
+		Content:  updateBlog.Content,
+	})
 	for _, blog := range blogs {
 		req := &blog_grpc.UpdateBlogRequest{
 			Blog: blog,
@@ -133,6 +133,17 @@ func TestUpdateBlog(t *testing.T) {
 			t.Fatalf("error occured testing UpdateBlog: %v\n", err)
 		}
 	}
+
+	req := &blog_grpc.ReadBlogRequest{
+		BlogId: 4,
+	}
+	res, err := client.ReadBlog(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, res.GetBlog().GetAuthorId(), updateBlog.AuthorId, "AuthorId of updated blog is not expectd")
+	assert.Equal(t, res.GetBlog().GetTitle(), updateBlog.Title, "Title of updated blog is not expectd")
+	assert.Equal(t, res.GetBlog().GetContent(), updateBlog.Content, "Content of updated blog is not expectd")
 
 	t.Log("finished TestUpdateBlog")
 }
