@@ -86,6 +86,7 @@ func (s server) DeleteBlog(ctx context.Context, req *blog_grpc.DeleteBlogRequest
 	res := &blog_grpc.DeleteBlogResponse{}
 	return res, nil
 }
+
 func (s server) ListBlog(req *blog_grpc.ListBlogRequest, stream blog_grpc.BlogService_ListBlogServer) error {
 	rows, err := s.Usecase.ListBlog()
 	if err != nil {
@@ -109,6 +110,24 @@ func (s server) ListBlog(req *blog_grpc.ListBlogRequest, stream blog_grpc.BlogSe
 	}
 
 	return nil
+}
+
+func (s server) ReadBlog(ctx context.Context, req *blog_grpc.ReadBlogRequest) (*blog_grpc.ReadBlogResponse, error) {
+	blogId := req.GetBlogId()
+	row, err := s.Usecase.ReadBlog(blogId)
+	if err != nil {
+		return nil, err
+	}
+	blog := &blog_grpc.Blog{
+		BlogId:   row.BlogId,
+		AuthorId: row.AuthorId,
+		Title:    row.Title,
+		Content:  row.Content,
+	}
+	res := &blog_grpc.ReadBlogResponse{
+		Blog: blog,
+	}
+	return res, nil
 }
 
 func (s server) UpdateBlog(ctx context.Context, req *blog_grpc.UpdateBlogRequest) (*blog_grpc.UpdateBlogResponse, error) {

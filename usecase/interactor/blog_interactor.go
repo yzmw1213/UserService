@@ -83,3 +83,11 @@ func (b *BlogInteractor) UpdateBlog(postData *model.Blog) error {
 
 	return nil
 }
+
+func (b *BlogInteractor) Read(blogId int32) (model.Blog, error) {
+	return db.Read(context.Background(), blogId)
+}
+
+func (b *BlogInteractor) ReadBlog(blogId int32) (model.Blog, error) {
+	return b.Read(blogId)
+}

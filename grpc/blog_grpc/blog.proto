@@ -20,7 +20,7 @@ message CreateBlogResponse {
 }
 
 message ReadBlogRequest {
-  Blog blog_id=1;
+  int32 blog_id=1;
 }
 
 message ReadBlogResponse {
@@ -52,7 +52,7 @@ message ListBlogResponse {
 
 service BlogService {
   rpc CreateBlog(CreateBlogRequest) returns (CreateBlogResponse);
-  // rpc ReadBlog(ReadBlogRequest) returns (ReadBlogResponse);
+  rpc ReadBlog(ReadBlogRequest) returns (ReadBlogResponse);
   rpc UpdateBlog(UpdateBlogRequest) returns (UpdateBlogResponse);
   rpc DeleteBlog(DeleteBlogRequest) returns (DeleteBlogResponse);
   rpc ListBlog(ListBlogRequest) returns (stream ListBlogResponse);

@@ -109,20 +109,12 @@ func TestUpdateBlog(t *testing.T) {
 	defer conn.Close()
 
 	client := blog_grpc.NewBlogServiceClient(conn)
-
 	blogs = append(blogs, &blog_grpc.Blog{
-		BlogId:   1,
-		AuthorId: 1234567890,
+		BlogId:   4,
+		AuthorId: 4444444,
+		Title:    "Title (Reading)",
+		Content:  "Content (Reading)",
 	})
-	blogs = append(blogs, &blog_grpc.Blog{
-		BlogId: 2,
-		Title:  "Title (Updated)",
-	})
-	blogs = append(blogs, &blog_grpc.Blog{
-		BlogId:  3,
-		Content: "Content (Updated)",
-	})
-
 	for _, blog := range blogs {
 		req := &blog_grpc.UpdateBlogRequest{
 			Blog: blog,
@@ -132,6 +124,17 @@ func TestUpdateBlog(t *testing.T) {
 		if err != nil {
 			t.Fatalf("error occured testing UpdateBlog: %v\n", err)
 		}
+	}
+
+	req := &blog_grpc.ReadBlogRequest{
+		BlogId: 4,
+	}
+	res, err := client.ReadBlog(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.GetBlog().GetAuthorId() != 4444444 || res.GetBlog().GetTitle() != "Title (Reading)" || res.GetBlog().GetContent() != "Content (Reading)" {
+		t.Fatal("Result of TestReadBlog was unexpected!")
 	}
 
 	t.Log("finished TestUpdateBlog")
