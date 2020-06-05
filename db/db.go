@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
 
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/yzmw1213/GoMicroApp/domain/model"
@@ -21,7 +22,13 @@ var (
 func initDB() {
 	var err error
 	DBMS := "mysql"
-	CONNECTION := "yzmw1213:root@tcp(localhost)/db?charset=utf8mb4&parseTime=True&loc=Local"
+	DB_ADRESS := os.Getenv("DB_ADRESS")
+	DB_NAME := os.Getenv("DB_NAME")
+	DB_PASSWORD := os.Getenv("DB_PASSWORD")
+	DB_USER := os.Getenv("DB_USER")
+	PROTOCOL := fmt.Sprintf("tcp(%s)", DB_ADRESS)
+	DB_OPTION := "?charset=utf8mb4&parseTime=True&loc=Local"
+	CONNECTION := fmt.Sprintf("%s:%s@%s/%s%s", DB_USER, DB_PASSWORD, PROTOCOL, DB_NAME, DB_OPTION)
 
 	DB, err = gorm.Open(DBMS, CONNECTION)
 	if err != nil {
