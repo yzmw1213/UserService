@@ -49,6 +49,7 @@ func (b *BlogInteractor) DeleteBlog(postData *model.Blog) error {
 	}
 	return nil
 }
+
 func (b *BlogInteractor) List() ([]model.Blog, error) {
 	var blogList []model.Blog
 	rows, err := db.ListAll(context.Background())

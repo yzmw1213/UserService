@@ -57,4 +57,3 @@ service BlogService {
   rpc DeleteBlog(DeleteBlogRequest) returns (DeleteBlogResponse);
   rpc ListBlog(ListBlogRequest) returns (stream ListBlogResponse);
 }
-
