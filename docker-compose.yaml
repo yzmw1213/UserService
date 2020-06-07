@@ -1,8 +1,7 @@
 version: '3'
 
 services:
-
-  db:
+  blog_db:
     image: mysql:latest
     container_name: mysql_host
     hostname: db_host
@@ -13,7 +12,41 @@ services:
       - "./docker/mysql/my.conf:/etc/mysql/my.conf"
     # 環境変数
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: db
-      MYSQL_USER: yzmw1213
-      MYSQL_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      TZ: Asia/Tokyo
+    networks:
+      - test-network
+    restart: always
+  blog_api:
+    build: 
+      context: ./
+      dockerfile: ./docker/api/Dockerfile
+    container_name: blog_api
+    tty: true
+    volumes:
+      - .:/go/src/app
+    ports: 
+      - "50051:50051"
+    entrypoint:
+      - dockerize
+      - -timeout
+      - 60s
+      - -wait
+      - tcp://blog_db:3306
+    command: go run main.go
+    # 環境変数
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_ADRESS: blog_db:3306
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    networks:
+      - test-network
+    restart: always
+networks:
+    test-network:
+        external: true

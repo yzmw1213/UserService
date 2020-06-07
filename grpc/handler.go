@@ -23,8 +23,7 @@ type server struct {
 }
 
 func NewBlogGrpcServer() {
-	fmt.Println("Hello")
-	lis, err := net.Listen("tcp", "0.0.0.0:50052")
+	lis, err := net.Listen("tcp", "0.0.0.0:50051")
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
@@ -39,6 +38,7 @@ func NewBlogGrpcServer() {
 
 	// Register reflection service on gRPC server.
 	reflection.Register(s)
+	log.Println("main grpc server has started")
 
 	go func() {
 		if err := s.Serve(lis); err != nil {
