@@ -23,8 +23,7 @@ type server struct {
 }
 
 func NewBlogGrpcServer() {
-	fmt.Println("Hello")
-	lis, err := net.Listen("tcp", "0.0.0.0:50052")
+	lis, err := net.Listen("tcp", "0.0.0.0:50051")
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
@@ -39,6 +38,7 @@ func NewBlogGrpcServer() {
 
 	// Register reflection service on gRPC server.
 	reflection.Register(s)
+	log.Println("main grpc server has started")
 
 	go func() {
 		if err := s.Serve(lis); err != nil {
@@ -75,15 +75,74 @@ func (s server) CreateBlog(ctx context.Context, req *blog_grpc.CreateBlogRequest
 	return res, nil
 }
 
-func (s server) ListBlog(ctx context.Context, req *blog_grpc.ListBlogRequest) (*blog_grpc.ListBlogResponse, error) {
-	FirstBlog := db.SelectFirst()
+func (s server) DeleteBlog(ctx context.Context, req *blog_grpc.DeleteBlogRequest) (*blog_grpc.DeleteBlogResponse, error) {
+	postData := req.GetBlogId()
+	blog := &model.Blog{
+		BlogId: postData,
+	}
+	if err := s.Usecase.DeleteBlog(blog); err != nil {
+		return nil, err
+	}
+	res := &blog_grpc.DeleteBlogResponse{}
+	return res, nil
+}
 
-	blog := &blog_grpc.Blog{
-		AuthorId: FirstBlog.AuthorId,
+func (s server) ListBlog(req *blog_grpc.ListBlogRequest, stream blog_grpc.BlogService_ListBlogServer) error {
+	rows, err := s.Usecase.ListBlog()
+	if err != nil {
+		return err
+	}
+	for _, blog := range rows {
+		blog := &blog_grpc.Blog{
+			BlogId:   blog.BlogId,
+			AuthorId: blog.AuthorId,
+			Title:    blog.Title,
+			Content:  blog.Content,
+		}
+		res := &blog_grpc.ListBlogResponse{
+			Blog: blog,
+		}
+		sendErr := stream.Send(res)
+		if sendErr != nil {
+			log.Fatalf("Error while sending response to client :%v", sendErr)
+			return sendErr
+		}
 	}
 
-	res := &blog_grpc.ListBlogResponse{
+	return nil
+}
+
+func (s server) ReadBlog(ctx context.Context, req *blog_grpc.ReadBlogRequest) (*blog_grpc.ReadBlogResponse, error) {
+	blogId := req.GetBlogId()
+	row, err := s.Usecase.ReadBlog(blogId)
+	if err != nil {
+		return nil, err
+	}
+	blog := &blog_grpc.Blog{
+		BlogId:   row.BlogId,
+		AuthorId: row.AuthorId,
+		Title:    row.Title,
+		Content:  row.Content,
+	}
+	res := &blog_grpc.ReadBlogResponse{
 		Blog: blog,
+	}
+	return res, nil
+}
+
+func (s server) UpdateBlog(ctx context.Context, req *blog_grpc.UpdateBlogRequest) (*blog_grpc.UpdateBlogResponse, error) {
+	postData := req.GetBlog()
+	blog := &model.Blog{
+		BlogId:   postData.GetBlogId(),
+		AuthorId: postData.GetAuthorId(),
+		Title:    postData.GetTitle(),
+		Content:  postData.GetContent(),
+	}
+	if err := s.Usecase.UpdateBlog(blog); err != nil {
+		return nil, err
+	}
+	res := &blog_grpc.UpdateBlogResponse{
+		Blog: postData,
 	}
 	return res, nil
 }
