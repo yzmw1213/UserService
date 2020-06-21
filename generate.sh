@@ -1,9 +1,8 @@
 #!/bin/sh
-DIR=$(cd $(dirname $0); pwd);
-SERVER_OUT_DIR="/grpc/blog_grpc";
-PROTO_PATH="grpc blog_grpc/blog.proto";
+DIR=$(cd "$(dirname "$0")" || exit 1 ; pwd);
+OUT_DIR="/grpc/blog_grpc";
+PROTO_FILE="blog.proto";
 
-# mode=grpcweb,grpcwebtextで結果が異なる
 protoc \
-  --proto_path=${PROTO_PATH} \
-  --go_out=plugins=grpc:${DIR}${SERVER_OUT_DIR}
+  --go_out=plugins=grpc:"${DIR}${OUT_DIR}" \
+  -I".${OUT_DIR}" "${PROTO_FILE}"

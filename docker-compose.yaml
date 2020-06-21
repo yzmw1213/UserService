@@ -27,7 +27,7 @@ services:
     container_name: blog_api
     tty: true
     volumes:
-      - .:/go/src/app
+      - .:/go/src/github.com/yzmw1213/GoMicroApp
     ports: 
       - "50051:50051"
     entrypoint:
@@ -36,7 +36,7 @@ services:
       - 60s
       - -wait
       - tcp://blog_db:3306
-    command: go run main.go
+    command: sh -c "make generate; go run main.go"
     # 環境変数
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
