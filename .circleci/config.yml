@@ -1,0 +1,39 @@
+# Golang CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-go/ for more details
+version: 2
+jobs:
+  shellCheck:
+    docker:
+      - image: koalaman/shellcheck-alpine:stable
+    steps:
+      - checkout
+      - run:
+          name: スクリプトチェック
+          command: |
+            find . -type f -name '*.sh' | wc -l
+            find . -type f -name '*.sh' | xargs shellcheck --external-sources
+  build:
+    machine: true
+
+    steps:
+      - checkout
+      - run:
+          name: create docker network
+          command: docker network create test-network
+      - run:
+          name: コンテナ起動
+          command: docker-compose up -d
+
+      - run: 
+          name: テスト
+          command: make test
+
+workflows:
+  version: 2
+  workflow:
+    jobs:
+      - shellCheck
+      - build:
+          requires:
+            - shellCheck
