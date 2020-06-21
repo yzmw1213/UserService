@@ -2,7 +2,10 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"log"
+	"os"
 
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/yzmw1213/GoMicroApp/domain/model"
@@ -11,13 +14,21 @@ import (
 )
 
 var (
-	DB *gorm.DB
+	DB        *gorm.DB
+	blog      model.Blog
+	tableName string = "blogs"
 )
 
 func initDB() {
 	var err error
 	DBMS := "mysql"
-	CONNECTION := "yzmw1213:root@tcp(localhost)/db?charset=utf8mb4&parseTime=True&loc=Local"
+	DB_ADRESS := os.Getenv("DB_ADRESS")
+	DB_NAME := os.Getenv("DB_NAME")
+	DB_PASSWORD := os.Getenv("DB_PASSWORD")
+	DB_USER := os.Getenv("DB_USER")
+	PROTOCOL := fmt.Sprintf("tcp(%s)", DB_ADRESS)
+	DB_OPTION := "?charset=utf8mb4&parseTime=True&loc=Local"
+	CONNECTION := fmt.Sprintf("%s:%s@%s/%s%s", DB_USER, DB_PASSWORD, PROTOCOL, DB_NAME, DB_OPTION)
 
 	DB, err = gorm.Open(DBMS, CONNECTION)
 	if err != nil {
@@ -58,13 +69,52 @@ func InsDelUpdOperation(ctx context.Context, op string, postData *model.Blog) er
 		if err := DB.Create(postData).Error; err != nil {
 			return err
 		}
+	case "update":
+		if err := DB.Model(&blog).Updates(postData).Error; err != nil {
+			return err
+		}
 	}
 	return nil
 
 }
 
-func SelectFirst() model.Blog {
-	blog := model.Blog{}
-	GetDB().First(blog)
-	return blog
+func Delete(ctx context.Context, postData *model.Blog) error {
+	initDB()
+
+	if err := DB.Delete(postData).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func Read(ctx context.Context, blogId int32) (model.Blog, error) {
+	initDB()
+	var blog model.Blog
+
+	row := DB.First(&blog, blogId)
+	if err := row.Error; err != nil {
+		log.Printf("Error happend while Read for blogid: %v\n", blogId)
+		return model.Blog{}, err
+	}
+	DB.Table(tableName).Scan(row)
+	return blog, nil
+}
+
+func ListAll(ctx context.Context) ([]model.Blog, error) {
+	initDB()
+	var blog model.Blog
+	var blogs []model.Blog
+	var rows *sql.Rows
+
+	rows, err := DB.Find(&blogs).Rows()
+	if err != nil {
+		log.Println("Error occured")
+		return nil, err
+	}
+
+	for rows.Next() {
+		DB.ScanRows(rows, &blog)
+		blogs = append(blogs, blog)
+	}
+	return blogs, nil
 }
