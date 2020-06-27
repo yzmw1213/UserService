@@ -35,4 +35,5 @@ WORKDIR /go/src/github.com/yzmw1213/GoMicroApp
 COPY . $PKG_PATH
 RUN go mod download
 
-RUN go get -u github.com/golang/protobuf/protoc-gen-go
+RUN go get -u github.com/golang/protobuf/protoc-gen-go \
+  && go get -u golang.org/x/lint/golint

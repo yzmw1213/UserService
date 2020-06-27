@@ -8,8 +8,6 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/jinzhu/gorm"
-	"github.com/yzmw1213/GoMicroApp/db"
 	"github.com/yzmw1213/GoMicroApp/domain/model"
 	"github.com/yzmw1213/GoMicroApp/grpc/blog_grpc"
 	"github.com/yzmw1213/GoMicroApp/usecase/interactor"
@@ -22,6 +20,7 @@ type server struct {
 	Usecase interactor.BlogInteractor
 }
 
+// NewBlogGrpcServer gRPCサーバー起動
 func NewBlogGrpcServer() {
 	lis, err := net.Listen("tcp", "0.0.0.0:50051")
 	if err != nil {
@@ -62,7 +61,7 @@ func NewBlogGrpcServer() {
 func (s server) CreateBlog(ctx context.Context, req *blog_grpc.CreateBlogRequest) (*blog_grpc.CreateBlogResponse, error) {
 	postData := req.GetBlog()
 	blog := &model.Blog{
-		AuthorId: postData.GetAuthorId(),
+		AuthorID: postData.GetAuthorId(),
 		Title:    postData.GetTitle(),
 		Content:  postData.GetContent(),
 	}
@@ -78,7 +77,7 @@ func (s server) CreateBlog(ctx context.Context, req *blog_grpc.CreateBlogRequest
 func (s server) DeleteBlog(ctx context.Context, req *blog_grpc.DeleteBlogRequest) (*blog_grpc.DeleteBlogResponse, error) {
 	postData := req.GetBlogId()
 	blog := &model.Blog{
-		BlogId: postData,
+		BlogID: postData,
 	}
 	if err := s.Usecase.DeleteBlog(blog); err != nil {
 		return nil, err
@@ -94,8 +93,8 @@ func (s server) ListBlog(req *blog_grpc.ListBlogRequest, stream blog_grpc.BlogSe
 	}
 	for _, blog := range rows {
 		blog := &blog_grpc.Blog{
-			BlogId:   blog.BlogId,
-			AuthorId: blog.AuthorId,
+			BlogId:   blog.BlogID,
+			AuthorId: blog.AuthorID,
 			Title:    blog.Title,
 			Content:  blog.Content,
 		}
@@ -113,14 +112,14 @@ func (s server) ListBlog(req *blog_grpc.ListBlogRequest, stream blog_grpc.BlogSe
 }
 
 func (s server) ReadBlog(ctx context.Context, req *blog_grpc.ReadBlogRequest) (*blog_grpc.ReadBlogResponse, error) {
-	blogId := req.GetBlogId()
-	row, err := s.Usecase.ReadBlog(blogId)
+	blogID := req.GetBlogId()
+	row, err := s.Usecase.ReadBlog(blogID)
 	if err != nil {
 		return nil, err
 	}
 	blog := &blog_grpc.Blog{
-		BlogId:   row.BlogId,
-		AuthorId: row.AuthorId,
+		BlogId:   row.BlogID,
+		AuthorId: row.AuthorID,
 		Title:    row.Title,
 		Content:  row.Content,
 	}
@@ -133,8 +132,8 @@ func (s server) ReadBlog(ctx context.Context, req *blog_grpc.ReadBlogRequest) (*
 func (s server) UpdateBlog(ctx context.Context, req *blog_grpc.UpdateBlogRequest) (*blog_grpc.UpdateBlogResponse, error) {
 	postData := req.GetBlog()
 	blog := &model.Blog{
-		BlogId:   postData.GetBlogId(),
-		AuthorId: postData.GetAuthorId(),
+		BlogID:   postData.GetBlogId(),
+		AuthorID: postData.GetAuthorId(),
 		Title:    postData.GetTitle(),
 		Content:  postData.GetContent(),
 	}
@@ -145,8 +144,4 @@ func (s server) UpdateBlog(ctx context.Context, req *blog_grpc.UpdateBlogRequest
 		Blog: postData,
 	}
 	return res, nil
-}
-
-func GetDB() *gorm.DB {
-	return db.GetDB()
 }

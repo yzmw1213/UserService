@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 
+	// gormのmysql接続用
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/yzmw1213/GoMicroApp/domain/model"
 
@@ -14,21 +15,22 @@ import (
 )
 
 var (
-	DB        *gorm.DB
-	blog      model.Blog
-	tableName string = "blogs"
+	// DB データベース構造体
+	DB   *gorm.DB
+	blog model.Blog
+	// TableName サービステーブル名
+	TableName string = "blogs"
 )
 
 func initDB() {
 	var err error
 	DBMS := "mysql"
-	DB_ADRESS := os.Getenv("DB_ADRESS")
-	DB_NAME := os.Getenv("DB_NAME")
-	DB_PASSWORD := os.Getenv("DB_PASSWORD")
-	DB_USER := os.Getenv("DB_USER")
-	PROTOCOL := fmt.Sprintf("tcp(%s)", DB_ADRESS)
-	DB_OPTION := "?charset=utf8mb4&parseTime=True&loc=Local"
-	CONNECTION := fmt.Sprintf("%s:%s@%s/%s%s", DB_USER, DB_PASSWORD, PROTOCOL, DB_NAME, DB_OPTION)
+	DBNAME := os.Getenv("DB_NAME")
+	PASSWORD := os.Getenv("DB_PASSWORD")
+	USER := os.Getenv("DB_USER")
+	PROTOCOL := fmt.Sprintf("tcp(%s)", os.Getenv("DB_ADRESS"))
+	OPTION := "?charset=utf8mb4&parseTime=True&loc=Local"
+	CONNECTION := fmt.Sprintf("%s:%s@%s/%s%s", USER, PASSWORD, PROTOCOL, DBNAME, OPTION)
 
 	DB, err = gorm.Open(DBMS, CONNECTION)
 	if err != nil {
@@ -36,18 +38,21 @@ func initDB() {
 	}
 }
 
+// Init DB接続と、マイグレーションを行う。
 func Init() {
 	initDB()
 	// マイグレーション実行
 	autoMigration()
 }
 
+// Close DBと切断する。
 func Close() {
 	if err := DB.Close(); err != nil {
 		panic(err)
 	}
 }
 
+// GetDB DB接続情報を返す
 func GetDB() *gorm.DB {
 	initDB()
 	return DB
@@ -61,45 +66,7 @@ func autoMigration() {
 	}
 }
 
-func InsDelUpdOperation(ctx context.Context, op string, postData *model.Blog) error {
-	initDB()
-
-	switch op {
-	case "insert":
-		if err := DB.Create(postData).Error; err != nil {
-			return err
-		}
-	case "update":
-		if err := DB.Model(&blog).Updates(postData).Error; err != nil {
-			return err
-		}
-	}
-	return nil
-
-}
-
-func Delete(ctx context.Context, postData *model.Blog) error {
-	initDB()
-
-	if err := DB.Delete(postData).Error; err != nil {
-		return err
-	}
-	return nil
-}
-
-func Read(ctx context.Context, blogId int32) (model.Blog, error) {
-	initDB()
-	var blog model.Blog
-
-	row := DB.First(&blog, blogId)
-	if err := row.Error; err != nil {
-		log.Printf("Error happend while Read for blogid: %v\n", blogId)
-		return model.Blog{}, err
-	}
-	DB.Table(tableName).Scan(row)
-	return blog, nil
-}
-
+// ListAll 全件取得
 func ListAll(ctx context.Context) ([]model.Blog, error) {
 	initDB()
 	var blog model.Blog
