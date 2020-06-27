@@ -3,54 +3,44 @@ package interactor
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/yzmw1213/GoMicroApp/db"
 	"github.com/yzmw1213/GoMicroApp/domain/model"
 	"github.com/yzmw1213/GoMicroApp/usecase/repository"
 )
 
-var err error
+var (
+	err  error
+	blog model.Blog
+)
 
+// BlogInteractor 投稿サービスを提供するメソッド群
 type BlogInteractor struct {
 	repository.BlogRepository
 }
 
-func NewBlogInteractor() *BlogInteractor {
-	return &BlogInteractor{}
-}
-
-func (b *BlogInteractor) Create(inputBlog *model.Blog) error {
-	if err := db.InsDelUpdOperation(context.Background(), "insert", inputBlog); err != nil {
-		return err
-	}
-	return nil
-}
-
+// CreateBlog 投稿1件を作成
 func (b *BlogInteractor) CreateBlog(postData *model.Blog) error {
-
-	if err = b.Create(postData); err != nil {
+	DB := db.GetDB()
+	if err := DB.Create(postData).Error; err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (b *BlogInteractor) Delete(inputBlog *model.Blog) error {
-	if err := db.Delete(context.Background(), inputBlog); err != nil {
-		return err
-	}
-	return nil
-}
-
+// DeleteBlog 投稿1件を削除
 func (b *BlogInteractor) DeleteBlog(postData *model.Blog) error {
-	var err error
-	if err = b.Delete(postData); err != nil {
+	DB := db.GetDB()
+	if err := DB.Delete(postData).Error; err != nil {
 		return err
 	}
 	return nil
 }
 
-func (b *BlogInteractor) List() ([]model.Blog, error) {
+// ListBlog 投稿を全件取得
+func (b *BlogInteractor) ListBlog() ([]model.Blog, error) {
 	var blogList []model.Blog
 	rows, err := db.ListAll(context.Background())
 	if err != nil {
@@ -64,31 +54,24 @@ func (b *BlogInteractor) List() ([]model.Blog, error) {
 	return blogList, nil
 }
 
-func (b *BlogInteractor) ListBlog() ([]model.Blog, error) {
-	return b.List()
-}
-
-func (b *BlogInteractor) Update(inputBlog *model.Blog) error {
-	if err := db.InsDelUpdOperation(context.Background(), "update", inputBlog); err != nil {
-		return err
-	}
-	return nil
-}
-
+// UpdateBlog 投稿を更新する
 func (b *BlogInteractor) UpdateBlog(postData *model.Blog) error {
-	var err error
-
-	if err = b.Update(postData); err != nil {
+	DB := db.GetDB()
+	if err := DB.Model(&blog).Updates(postData).Error; err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (b *BlogInteractor) Read(blogId int32) (model.Blog, error) {
-	return db.Read(context.Background(), blogId)
-}
-
-func (b *BlogInteractor) ReadBlog(blogId int32) (model.Blog, error) {
-	return b.Read(blogId)
+// ReadBlog IDを元に投稿を1件取得する
+func (b *BlogInteractor) ReadBlog(blogID int32) (model.Blog, error) {
+	DB := db.GetDB()
+	row := DB.First(&blog, blogID)
+	if err := row.Error; err != nil {
+		log.Printf("Error happend while Read for blogiD: %v\n", blogID)
+		return model.Blog{}, err
+	}
+	DB.Table(db.TableName).Scan(row)
+	return blog, nil
 }

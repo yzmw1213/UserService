@@ -2,9 +2,10 @@ package model
 
 import "time"
 
+// Blog 投稿サービス構造体
 type Blog struct {
-	BlogId    int32 `gorm:"primary_key"`
-	AuthorId  int32
+	BlogID    int32 `gorm:"primary_key"`
+	AuthorID  int32
 	Title     string
 	Content   string
 	CreatedAt time.Time

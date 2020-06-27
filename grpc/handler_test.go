@@ -94,10 +94,10 @@ func TestDeleteBlog(t *testing.T) {
 
 	client := blog_grpc.NewBlogServiceClient(conn)
 
-	var deleteBlogId int32 = 2
+	var deleteBlogID int32 = 2
 
 	req := &blog_grpc.DeleteBlogRequest{
-		BlogId: deleteBlogId,
+		BlogId: deleteBlogID,
 	}
 
 	_, err = client.DeleteBlog(ctx, req)
@@ -107,7 +107,7 @@ func TestDeleteBlog(t *testing.T) {
 	}
 
 	blog := &model.Blog{
-		BlogId: deleteBlogId,
+		BlogID: deleteBlogID,
 	}
 
 	if !db.DB.First(&blog).RecordNotFound() {
@@ -123,7 +123,7 @@ func TestGetDB(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer conn.Close()
-	db := GetDB()
+	db := db.GetDB()
 	if !db.HasTable(model.Blog{}) {
 		t.Fatal("db does not have table named 'blogs'")
 	}
@@ -141,8 +141,8 @@ func TestUpdateBlog(t *testing.T) {
 	defer conn.Close()
 
 	updateBlog := &model.Blog{
-		BlogId:   3,
-		AuthorId: 1234567890,
+		BlogID:   3,
+		AuthorID: 1234567890,
 		Title:    "Updated Title",
 		Content:  "Updated Content",
 	}
@@ -150,8 +150,8 @@ func TestUpdateBlog(t *testing.T) {
 	client := blog_grpc.NewBlogServiceClient(conn)
 
 	updateBlogs = append(updateBlogs, &blog_grpc.Blog{
-		BlogId:   updateBlog.BlogId,
-		AuthorId: updateBlog.AuthorId,
+		BlogId:   updateBlog.BlogID,
+		AuthorId: updateBlog.AuthorID,
 		Title:    updateBlog.Title,
 		Content:  updateBlog.Content,
 	})
@@ -176,7 +176,7 @@ func TestUpdateBlog(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, updateBlog.AuthorId, res.GetBlog().GetAuthorId(), "AuthorId of updated blog is not expectd")
+	assert.Equal(t, updateBlog.AuthorID, res.GetBlog().GetAuthorId(), "AuthorId of updated blog is not expectd")
 	assert.Equal(t, updateBlog.Title, res.GetBlog().GetTitle(), "Title of updated blog is not expectd")
 	assert.Equal(t, updateBlog.Content, res.GetBlog().GetContent(), "Content of updated blog is not expectd")
 
