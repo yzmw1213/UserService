@@ -13,7 +13,7 @@ jobs:
           command: |
             find . -type f -name '*.sh' | wc -l
             find . -type f -name '*.sh' | xargs shellcheck --external-sources
-  build:
+  test:
     machine: true
 
     steps:
@@ -36,6 +36,34 @@ workflows:
   workflow:
     jobs:
       - shellCheck
-      - build:
+      - test:
           requires:
             - shellCheck
+      # dockerイメージのビルド & ECRへプッシュ
+      - aws-ecr/build-and-push-image:
+          # テストをパスしたら実行
+          requires:
+            - test
+          # filters:
+          #   branches:
+          #     only: master
+          region: AWS_DEFAULT_REGION
+          account-url: AWS_ECR_ACCOUNT_URL
+          repo: ${ECR_REPOSITORY_NAME}
+          tag: ${CIRCLE_SHA1}
+      - aws-ecs/deploy-service-update:
+          # イメージのビルド & プッシュが成功したら実行
+          requires:
+            - aws-ecr/build-and-push-image
+          aws-region: ${AWS_DEFAULT_REGION}
+          family: '${ECS_TASK}'
+          cluster-name: '${ECS_CLUSTER}'
+          service-name: '${ECS_SERVICE}'
+          container-image-name-updates: 'container=${ECS_SERVICE},tag=${CIRCLE_SHA1},image-and-tag=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${ECR_REPOSITORY_NAME}:${CIRCLE_SHA1}'
+      # - aws-ecs/run-task:
+      #     requires:
+      #       - aws-ecs/deploy-service-update
+      #     aws-region: ${AWS_DEFAULT_REGION}
+      #     cluster: '${ECS_CLUSTER}'
+      #     task-definition: '${ECS_TASK}'
+      #     launch-type: EC2
