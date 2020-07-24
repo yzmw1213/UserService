@@ -8,16 +8,6 @@ orbs:
   aws-ecs: circleci/aws-ecs@1.1.0
 
 jobs:
-  shellCheck:
-    docker:
-      - image: koalaman/shellcheck-alpine:stable
-    steps:
-      - checkout
-      - run:
-          name: スクリプトチェック
-          command: |
-            find . -type f -name '*.sh' | wc -l
-            find . -type f -name '*.sh' | xargs shellcheck --external-sources
   test:
     machine: true
 
@@ -40,18 +30,15 @@ workflows:
   version: 2
   workflow:
     jobs:
-      - shellCheck
-      - test:
-          requires:
-            - shellCheck
+      - test
       # dockerイメージのビルド & ECRへプッシュ
       - aws-ecr/build-and-push-image:
           # テストをパスしたら実行
           requires:
             - test
-          # filters:
-          #   branches:
-          #     only: master
+          filters:
+            branches:
+              only: master
           region: AWS_DEFAULT_REGION
           account-url: AWS_ECR_ACCOUNT_URL
           repo: ${ECR_REPOSITORY_NAME}
@@ -60,6 +47,9 @@ workflows:
           # イメージのビルド & プッシュが成功したら実行
           requires:
             - aws-ecr/build-and-push-image
+          filters:
+            branches:
+              only: master
           aws-region: ${AWS_DEFAULT_REGION}
           family: '${ECS_TASK}'
           cluster-name: '${ECS_CLUSTER}'
