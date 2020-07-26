@@ -22,8 +22,7 @@ services:
     restart: always
   blog_api:
     build: 
-      context: ./
-      dockerfile: ./docker/api/Dockerfile
+      context: ./docker/api
     container_name: blog_api
     tty: true
     volumes:

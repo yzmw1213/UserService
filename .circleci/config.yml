@@ -1,19 +1,14 @@
 # Golang CircleCI 2.0 configuration file
 #
 # Check https://circleci.com/docs/2.0/language-go/ for more details
-version: 2
+version: 2.1
+
+orbs:
+  aws-ecr: circleci/aws-ecr@6.0.0
+  aws-ecs: circleci/aws-ecs@1.1.0
+
 jobs:
-  shellCheck:
-    docker:
-      - image: koalaman/shellcheck-alpine:stable
-    steps:
-      - checkout
-      - run:
-          name: スクリプトチェック
-          command: |
-            find . -type f -name '*.sh' | wc -l
-            find . -type f -name '*.sh' | xargs shellcheck --external-sources
-  build:
+  test:
     machine: true
 
     steps:
@@ -35,7 +30,35 @@ workflows:
   version: 2
   workflow:
     jobs:
-      - shellCheck
-      - build:
+      - test
+      # dockerイメージのビルド & ECRへプッシュ
+      - aws-ecr/build-and-push-image:
+          # テストをパスしたら実行
           requires:
-            - shellCheck
+            - test
+          filters:
+            branches:
+              only: master
+          region: AWS_DEFAULT_REGION
+          account-url: AWS_ECR_ACCOUNT_URL
+          repo: ${ECR_REPOSITORY_NAME}
+          tag: ${CIRCLE_SHA1}
+      - aws-ecs/deploy-service-update:
+          # イメージのビルド & プッシュが成功したら実行
+          requires:
+            - aws-ecr/build-and-push-image
+          filters:
+            branches:
+              only: master
+          aws-region: ${AWS_DEFAULT_REGION}
+          family: '${ECS_TASK}'
+          cluster-name: '${ECS_CLUSTER}'
+          service-name: '${ECS_SERVICE}'
+          container-image-name-updates: 'container=${ECS_SERVICE},tag=${CIRCLE_SHA1},image-and-tag=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${ECR_REPOSITORY_NAME}:${CIRCLE_SHA1}'
+      # - aws-ecs/run-task:
+      #     requires:
+      #       - aws-ecs/deploy-service-update
+      #     aws-region: ${AWS_DEFAULT_REGION}
+      #     cluster: '${ECS_CLUSTER}'
+      #     task-definition: '${ECS_TASK}'
+      #     launch-type: EC2
