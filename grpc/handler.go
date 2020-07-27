@@ -65,7 +65,7 @@ func (s server) CreateBlog(ctx context.Context, req *blog_grpc.CreateBlogRequest
 		Title:    postData.GetTitle(),
 		Content:  postData.GetContent(),
 	}
-	if err := s.Usecase.CreateBlog(blog); err != nil {
+	if err := s.Usecase.Create(blog); err != nil {
 		return nil, err
 	}
 	res := &blog_grpc.CreateBlogResponse{
@@ -79,7 +79,7 @@ func (s server) DeleteBlog(ctx context.Context, req *blog_grpc.DeleteBlogRequest
 	blog := &model.Blog{
 		BlogID: postData,
 	}
-	if err := s.Usecase.DeleteBlog(blog); err != nil {
+	if err := s.Usecase.Delete(blog); err != nil {
 		return nil, err
 	}
 	res := &blog_grpc.DeleteBlogResponse{}
@@ -87,7 +87,7 @@ func (s server) DeleteBlog(ctx context.Context, req *blog_grpc.DeleteBlogRequest
 }
 
 func (s server) ListBlog(req *blog_grpc.ListBlogRequest, stream blog_grpc.BlogService_ListBlogServer) error {
-	rows, err := s.Usecase.ListBlog()
+	rows, err := s.Usecase.List()
 	if err != nil {
 		return err
 	}
@@ -113,7 +113,7 @@ func (s server) ListBlog(req *blog_grpc.ListBlogRequest, stream blog_grpc.BlogSe
 
 func (s server) ReadBlog(ctx context.Context, req *blog_grpc.ReadBlogRequest) (*blog_grpc.ReadBlogResponse, error) {
 	blogID := req.GetBlogId()
-	row, err := s.Usecase.ReadBlog(blogID)
+	row, err := s.Usecase.Read(blogID)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func (s server) UpdateBlog(ctx context.Context, req *blog_grpc.UpdateBlogRequest
 		Title:    postData.GetTitle(),
 		Content:  postData.GetContent(),
 	}
-	if err := s.Usecase.UpdateBlog(blog); err != nil {
+	if err := s.Usecase.Update(blog); err != nil {
 		return nil, err
 	}
 	res := &blog_grpc.UpdateBlogResponse{
