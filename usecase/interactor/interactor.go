@@ -16,12 +16,12 @@ var (
 )
 
 // BlogInteractor 投稿サービスを提供するメソッド群
-type BlogInteractor struct {
-	repository.BlogRepository
-}
+type BlogInteractor struct{}
 
-// CreateBlog 投稿1件を作成
-func (b *BlogInteractor) CreateBlog(postData *model.Blog) error {
+var _ repository.BlogRepository = (*BlogInteractor)(nil)
+
+// Create 投稿1件を作成
+func (b *BlogInteractor) Create(postData *model.Blog) error {
 	DB := db.GetDB()
 	if err := DB.Create(postData).Error; err != nil {
 		return err
@@ -30,8 +30,8 @@ func (b *BlogInteractor) CreateBlog(postData *model.Blog) error {
 	return nil
 }
 
-// DeleteBlog 投稿1件を削除
-func (b *BlogInteractor) DeleteBlog(postData *model.Blog) error {
+// Delete 投稿1件を削除
+func (b *BlogInteractor) Delete(postData *model.Blog) error {
 	DB := db.GetDB()
 	if err := DB.Delete(postData).Error; err != nil {
 		return err
@@ -39,8 +39,8 @@ func (b *BlogInteractor) DeleteBlog(postData *model.Blog) error {
 	return nil
 }
 
-// ListBlog 投稿を全件取得
-func (b *BlogInteractor) ListBlog() ([]model.Blog, error) {
+// List 投稿を全件取得
+func (b *BlogInteractor) List() ([]model.Blog, error) {
 	var blogList []model.Blog
 	rows, err := db.ListAll(context.Background())
 	if err != nil {
@@ -54,8 +54,8 @@ func (b *BlogInteractor) ListBlog() ([]model.Blog, error) {
 	return blogList, nil
 }
 
-// UpdateBlog 投稿を更新する
-func (b *BlogInteractor) UpdateBlog(postData *model.Blog) error {
+// Update 投稿を更新する
+func (b *BlogInteractor) Update(postData *model.Blog) error {
 	DB := db.GetDB()
 	if err := DB.Model(&blog).Updates(postData).Error; err != nil {
 		return err
@@ -64,8 +64,8 @@ func (b *BlogInteractor) UpdateBlog(postData *model.Blog) error {
 	return nil
 }
 
-// ReadBlog IDを元に投稿を1件取得する
-func (b *BlogInteractor) ReadBlog(blogID int32) (model.Blog, error) {
+// Read IDを元に投稿を1件取得する
+func (b *BlogInteractor) Read(blogID int32) (model.Blog, error) {
 	DB := db.GetDB()
 	row := DB.First(&blog, blogID)
 	if err := row.Error; err != nil {
