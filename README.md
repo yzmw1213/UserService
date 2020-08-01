@@ -14,7 +14,7 @@ Goで構築するマイクロサービスの雛形アプリケーション
 - CircleCI
 
 ## 構成図
-![AWS_stracture](https://user-images.githubusercontent.com/36359899/89096995-ea634f00-d415-11ea-9d86-0cd0fbfc099f.png)
+![AWS_stracture](https://user-images.githubusercontent.com/36359899/89097162-79bd3200-d417-11ea-83e5-8c998c824a0f.png)
 
 ## 機能一覧
 - 簡易投稿
