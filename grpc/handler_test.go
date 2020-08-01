@@ -84,6 +84,110 @@ func TestCreateBlog(t *testing.T) {
 	t.Log("finished TestCreateBlog")
 }
 
+// TestCreateBlogTitleMax Titleが文字数超過の異常系
+func TestCreateBlogTitleMax(t *testing.T) {
+	var createBlog = &blog_grpc.Blog{
+		AuthorId: 555555,
+		Title:    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		Content:  "Content of blog",
+	}
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+
+	client := blog_grpc.NewBlogServiceClient(conn)
+
+	req := &blog_grpc.CreateBlogRequest{
+		Blog: createBlog,
+	}
+	_, err = client.CreateBlog(context.Background(), req)
+	if err == nil {
+		log.Fatalf("Error message for Title")
+	}
+
+}
+
+// TestCreateBlogTitleNull TitleがNullの異常系
+func TestCreateBlogTitleNull(t *testing.T) {
+	var createBlog = &blog_grpc.Blog{
+		AuthorId: 666666,
+		Title:    "",
+		Content:  "Content of blog",
+	}
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+
+	client := blog_grpc.NewBlogServiceClient(conn)
+
+	req := &blog_grpc.CreateBlogRequest{
+		Blog: createBlog,
+	}
+	_, err = client.CreateBlog(context.Background(), req)
+	if err == nil {
+		log.Fatalf("Error message for Title")
+	}
+
+}
+
+// TestCreateBlogContentMax Contentが文字数超過の異常系
+func TestCreateBlogContentMax(t *testing.T) {
+	var createBlog = &blog_grpc.Blog{
+		AuthorId: 777777,
+		Title:    "Title of blog",
+		Content:  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+	}
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+
+	client := blog_grpc.NewBlogServiceClient(conn)
+
+	req := &blog_grpc.CreateBlogRequest{
+		Blog: createBlog,
+	}
+	_, err = client.CreateBlog(context.Background(), req)
+	if err == nil {
+		log.Fatalf("Error message for Content")
+	}
+
+}
+
+// TestCreateBlogContentNull ContentがNullの異常系
+func TestCreateBlogContentNull(t *testing.T) {
+	var createBlog = &blog_grpc.Blog{
+		AuthorId: 888888,
+		Title:    "Title of blog",
+		Content:  "",
+	}
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+
+	client := blog_grpc.NewBlogServiceClient(conn)
+
+	req := &blog_grpc.CreateBlogRequest{
+		Blog: createBlog,
+	}
+	_, err = client.CreateBlog(context.Background(), req)
+	if err == nil {
+		log.Fatalf("Error message for Content")
+	}
+
+}
+
 func TestDeleteBlog(t *testing.T) {
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
