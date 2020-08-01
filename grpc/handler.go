@@ -8,6 +8,8 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/go-playground/validator/v10"
+
 	"github.com/yzmw1213/GoMicroApp/domain/model"
 	"github.com/yzmw1213/GoMicroApp/grpc/blog_grpc"
 	"github.com/yzmw1213/GoMicroApp/usecase/interactor"
@@ -60,11 +62,19 @@ func NewBlogGrpcServer() {
 
 func (s server) CreateBlog(ctx context.Context, req *blog_grpc.CreateBlogRequest) (*blog_grpc.CreateBlogResponse, error) {
 	postData := req.GetBlog()
+	validate := validator.New()
+
 	blog := &model.Blog{
 		AuthorID: postData.GetAuthorId(),
 		Title:    postData.GetTitle(),
 		Content:  postData.GetContent(),
 	}
+
+	// Blog構造体のバリデーション
+	if error := validate.Struct(blog); error != nil {
+		return nil, error
+	}
+
 	if err := s.Usecase.Create(blog); err != nil {
 		return nil, err
 	}
@@ -131,12 +141,20 @@ func (s server) ReadBlog(ctx context.Context, req *blog_grpc.ReadBlogRequest) (*
 
 func (s server) UpdateBlog(ctx context.Context, req *blog_grpc.UpdateBlogRequest) (*blog_grpc.UpdateBlogResponse, error) {
 	postData := req.GetBlog()
+	validate := validator.New()
+
 	blog := &model.Blog{
 		BlogID:   postData.GetBlogId(),
 		AuthorID: postData.GetAuthorId(),
 		Title:    postData.GetTitle(),
 		Content:  postData.GetContent(),
 	}
+
+	// Blog構造体のバリデーション
+	if error := validate.Struct(blog); error != nil {
+		return nil, error
+	}
+
 	if err := s.Usecase.Update(blog); err != nil {
 		return nil, err
 	}
