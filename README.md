@@ -9,7 +9,7 @@ Goで構築するマイクロサービスの雛形アプリケーション
 - Docker docker-compose
 - protoc 3.11.0
 - dockerize v0.6.1
-- AWS(VPC,ECS,ECR,MySQL,ELB)
+- AWS(VPC,ECS,ECR,RDS,ELB)
 - terraform
 - CircleCI
 

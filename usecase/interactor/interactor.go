@@ -2,6 +2,7 @@ package interactor
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 
@@ -11,8 +12,10 @@ import (
 )
 
 var (
-	err  error
-	blog model.Blog
+	err   error
+	blog  model.Blog
+	blogs []model.Blog
+	rows  *sql.Rows
 )
 
 // BlogInteractor 投稿サービスを提供するメソッド群
@@ -42,7 +45,7 @@ func (b *BlogInteractor) Delete(postData *model.Blog) error {
 // List 投稿を全件取得
 func (b *BlogInteractor) List() ([]model.Blog, error) {
 	var blogList []model.Blog
-	rows, err := db.ListAll(context.Background())
+	rows, err := listAll(context.Background())
 	if err != nil {
 		fmt.Println("Error happened")
 		return []model.Blog{}, err
@@ -52,6 +55,23 @@ func (b *BlogInteractor) List() ([]model.Blog, error) {
 	}
 
 	return blogList, nil
+}
+
+// listAll 全件取得
+func listAll(ctx context.Context) ([]model.Blog, error) {
+	DB := db.GetDB()
+
+	rows, err := DB.Find(&blogs).Rows()
+	if err != nil {
+		log.Println("Error occured")
+		return nil, err
+	}
+
+	for rows.Next() {
+		DB.ScanRows(rows, &blog)
+		blogs = append(blogs, blog)
+	}
+	return blogs, nil
 }
 
 // Update 投稿を更新する
