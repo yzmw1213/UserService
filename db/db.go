@@ -1,10 +1,7 @@
 package db
 
 import (
-	"context"
-	"database/sql"
 	"fmt"
-	"log"
 	"os"
 
 	// gormのmysql接続用
@@ -64,24 +61,4 @@ func autoMigration() {
 	if err != nil {
 		panic(err)
 	}
-}
-
-// ListAll 全件取得
-func ListAll(ctx context.Context) ([]model.Blog, error) {
-	initDB()
-	var blog model.Blog
-	var blogs []model.Blog
-	var rows *sql.Rows
-
-	rows, err := DB.Find(&blogs).Rows()
-	if err != nil {
-		log.Println("Error occured")
-		return nil, err
-	}
-
-	for rows.Next() {
-		DB.ScanRows(rows, &blog)
-		blogs = append(blogs, blog)
-	}
-	return blogs, nil
 }
