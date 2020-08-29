@@ -55,8 +55,8 @@ resource "aws_security_group" "allow_mysql" {
   description = "security group that allows mysql connection"
 
   ingress {
-    from_port = 3306
-    to_port = 3306
+    from_port = 3307
+    to_port = 3307
     protocol = "tcp"
     security_groups = [aws_security_group.ecs-securitygroup.id]
   }

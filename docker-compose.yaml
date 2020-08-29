@@ -1,12 +1,12 @@
 version: '3'
 
 services:
-  blog_db:
+  user_db:
     image: mysql:latest
-    container_name: mysql_host
-    hostname: db_host
+    container_name: mysql_host_user_container
+    hostname: user_db_host
     ports:
-      - "3306:3306"
+      - "3307:3306"
     # 初期設定
     volumes: 
       - "./docker/mysql/my.conf:/etc/mysql/my.conf"
@@ -18,34 +18,34 @@ services:
       MYSQL_PASSWORD: ${DB_PASSWORD}
       TZ: Asia/Tokyo
     networks:
-      - test-network
+      - test-user-network
     restart: always
-  blog_api:
+  user_api:
     build: 
       context: ./docker/api
-    container_name: blog_api
+    container_name: user_api
     tty: true
     volumes:
-      - .:/go/src/github.com/yzmw1213/GoMicroApp
+      - .:/go/src/github.com/yzmw1213/UserService
     ports: 
-      - "50051:50051"
+      - "50052:50052"
     entrypoint:
       - dockerize
       - -timeout
       - 60s
       - -wait
-      - tcp://blog_db:3306
+      - tcp://user_db:3306
     command: sh -c "make generate; go run main.go"
     # 環境変数
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       DB_NAME: ${DB_NAME}
-      DB_ADRESS: blog_db:3306
+      DB_ADRESS: user_db:3306
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
     networks:
-      - test-network
+      - test-user-network
     restart: always
 networks:
-    test-network:
+    test-user-network:
         external: true

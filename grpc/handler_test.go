@@ -2,28 +2,38 @@ package grpc
 
 import (
 	"context"
-	"io"
 	"log"
 	"net"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/yzmw1213/GoMicroApp/db"
-	"github.com/yzmw1213/GoMicroApp/domain/model"
-	"github.com/yzmw1213/GoMicroApp/grpc/blog_grpc"
+	"github.com/yzmw1213/UserService/grpc/user_grpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
 )
 
-const bufSize = 1024 * 1024
+const (
+	bufSize = 1024 * 1024
+)
+
+type loginCreds struct {
+	Email, Password string
+}
 
 var lis *bufconn.Listener
 var err error
+var ctx = context.Background()
+
+var demouser = user_grpc.User{
+	UserName: "デモユーザ名1",
+	Email:    "demo@gmail.com",
+	Password: "demopassword",
+}
 
 func init() {
 	lis = bufconn.Listen(bufSize)
 	s := grpc.NewServer()
-	blog_grpc.RegisterBlogServiceServer(s, &server{})
+	user_grpc.RegisterUserServiceServer(s, &server{})
 	go func() {
 		if err := s.Serve(lis); err != nil {
 			log.Fatal(err)
@@ -35,282 +45,307 @@ func bufDialer(ctx context.Context, address string) (net.Conn, error) {
 	return lis.Dial()
 }
 
-func TestCreateBlog(t *testing.T) {
-	var createBlogs []*blog_grpc.Blog
-	ctx := context.Background()
+func (c *loginCreds) GetRequestMetadata(context.Context, ...string) (map[string]string, error) {
+	return map[string]string{
+		"username": c.Email,
+		"password": c.Password,
+	}, nil
+}
+
+func (c *loginCreds) RequireTransportSecurity() bool {
+	return true
+}
+
+// func (c *loginCreds) GetRequestMetadata(context.Context, ...string) (map[string]string, error) {
+//     return map[string]string{
+//         "username": c.Username,
+//         "password": c.Password,
+//     }, nil
+// }
+
+// TestCreateUser ユーザ作成正常系
+func TestCreateUser(t *testing.T) {
+	var createUsers []*user_grpc.User
+
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer conn.Close()
 
-	client := blog_grpc.NewBlogServiceClient(conn)
+	client := user_grpc.NewUserServiceClient(conn)
 
-	createBlogs = append(createBlogs, &blog_grpc.Blog{
-		AuthorId: 1111111111,
-		Title:    "Title of the first blog",
-		Content:  "Content of the first blog",
-	})
+	createUsers = append(createUsers, &demouser)
 
-	createBlogs = append(createBlogs, &blog_grpc.Blog{
-		AuthorId: 222222222,
-		Title:    "Title of the secound blog",
-		Content:  "Content of the second blog",
-	})
-
-	createBlogs = append(createBlogs, &blog_grpc.Blog{
-		AuthorId: 333333333,
-		Title:    "Title of the third blog",
-		Content:  "Content of the third blog",
-	})
-
-	createBlogs = append(createBlogs, &blog_grpc.Blog{
-		AuthorId: 444444444,
-		Title:    "Title of the fourth blog",
-		Content:  "Content of the fourth blog",
-	})
-
-	for _, blog := range createBlogs {
-		req := &blog_grpc.CreateBlogRequest{
-			Blog: blog,
+	for _, user := range createUsers {
+		req := &user_grpc.CreateUserRequest{
+			User: user,
 		}
 
-		_, err = client.CreateBlog(ctx, req)
+		res, err := client.CreateUser(ctx, req)
 
-		if err != nil {
-			t.Fatalf("error occured testing CreateBlog: %v\n", err)
-		}
+		assert.Equal(t, nil, err)
+		assert.Equal(t, StatusCreateUserSuccess, res.GetStatus().GetCode())
 	}
-	t.Log("finished TestCreateBlog")
 }
 
-// TestCreateBlogTitleMax Titleが文字数超過の異常系
-func TestCreateBlogTitleMax(t *testing.T) {
-	var createBlog = &blog_grpc.Blog{
-		AuthorId: 555555,
-		Title:    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-		Content:  "Content of blog",
+// TestCreateUserEmailInvalidWithAuth ユーザ作成Email無効の異常系
+func TestCreateUserEmailInvalidWithAuth(t *testing.T) {
+	var createUser *user_grpc.User
+	conn, err := grpc.Dial(
+		"bufnet",
+		grpc.WithContextDialer(bufDialer),
+		grpc.WithInsecure(),
+		grpc.WithPerRPCCredentials(&loginCreds{
+			Email:    "demo@gmail.com",
+			Password: "demopassword",
+		}),
+	)
+	if err != nil {
+		t.Fatal(err)
 	}
-	ctx := context.Background()
+	defer conn.Close()
+
+	client := user_grpc.NewUserServiceClient(conn)
+
+	createUser = &user_grpc.User{
+		UserName: "テストユーザ名1",
+		Password: "demopassword1",
+		Email:    "aaaaa",
+	}
+
+	req := &user_grpc.CreateUserRequest{
+		User: createUser,
+	}
+
+	res, err := client.CreateUser(ctx, req)
+
+	assert.Equal(t, nil, err)
+	assert.Equal(t, StatusEmailInputInvalid, res.GetStatus().GetCode())
+}
+
+// TestCreateUserEmailInvalid ユーザ作成Email無効の異常系
+func TestCreateUserEmailInvalid(t *testing.T) {
+	var createUser *user_grpc.User
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer conn.Close()
 
-	client := blog_grpc.NewBlogServiceClient(conn)
+	client := user_grpc.NewUserServiceClient(conn)
 
-	req := &blog_grpc.CreateBlogRequest{
-		Blog: createBlog,
-	}
-	_, err = client.CreateBlog(context.Background(), req)
-	if err == nil {
-		log.Fatalf("Error message for Title")
+	createUser = &user_grpc.User{
+		UserName: "テストユーザ名1",
+		Password: "demopassword1",
+		Email:    "aaaaa",
 	}
 
+	req := &user_grpc.CreateUserRequest{
+		User: createUser,
+	}
+
+	res, err := client.CreateUser(ctx, req)
+
+	assert.Equal(t, nil, err)
+	assert.Equal(t, StatusEmailInputInvalid, res.GetStatus().GetCode())
 }
 
-// TestCreateBlogTitleNull TitleがNullの異常系
-func TestCreateBlogTitleNull(t *testing.T) {
-	var createBlog = &blog_grpc.Blog{
-		AuthorId: 666666,
-		Title:    "",
-		Content:  "Content of blog",
-	}
-	ctx := context.Background()
+// TestCreateUserEmailNull ユーザ作成Email未入力の異常系
+func TestCreateUserEmailNull(t *testing.T) {
+	var createUser *user_grpc.User
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer conn.Close()
 
-	client := blog_grpc.NewBlogServiceClient(conn)
+	client := user_grpc.NewUserServiceClient(conn)
 
-	req := &blog_grpc.CreateBlogRequest{
-		Blog: createBlog,
-	}
-	_, err = client.CreateBlog(context.Background(), req)
-	if err == nil {
-		log.Fatalf("Error message for Title")
+	createUser = &user_grpc.User{
+		UserName: "テストユーザ名2",
+		Password: "demopassword",
+		Email:    "",
 	}
 
+	req := &user_grpc.CreateUserRequest{
+		User: createUser,
+	}
+
+	res, err := client.CreateUser(ctx, req)
+
+	assert.Equal(t, nil, err)
+	assert.Equal(t, StatusEmailInputInvalid, res.GetStatus().GetCode())
 }
 
-// TestCreateBlogContentMax Contentが文字数超過の異常系
-func TestCreateBlogContentMax(t *testing.T) {
-	var createBlog = &blog_grpc.Blog{
-		AuthorId: 777777,
-		Title:    "Title of blog",
-		Content:  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-	}
-	ctx := context.Background()
+// TestCreateUserEmailUsed 既に登録済みのemailを登録する異常系
+func TestCreateUserEmailUsed(t *testing.T) {
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer conn.Close()
 
-	client := blog_grpc.NewBlogServiceClient(conn)
+	client := user_grpc.NewUserServiceClient(conn)
 
-	req := &blog_grpc.CreateBlogRequest{
-		Blog: createBlog,
-	}
-	_, err = client.CreateBlog(context.Background(), req)
-	if err == nil {
-		log.Fatalf("Error message for Content")
+	firstCreateUser := &user_grpc.User{
+		UserName: "テストユーザ名3",
+		Password: "demopassword3",
+		Email:    "used@gmail.com",
 	}
 
+	nextCreateUser := &user_grpc.User{
+		UserName: "テストユーザ名4",
+		Password: "demopassword4",
+		Email:    "used@gmail.com",
+	}
+
+	req := &user_grpc.CreateUserRequest{
+		User: firstCreateUser,
+	}
+
+	_, err = client.CreateUser(ctx, req)
+
+	if err != nil {
+		log.Fatalf("Error message for Email")
+	}
+
+	req = &user_grpc.CreateUserRequest{
+		User: nextCreateUser,
+	}
+
+	// firstCreateUserで登録したemailを再び使用して登録
+	res, err := client.CreateUser(ctx, req)
+
+	assert.Equal(t, nil, err)
+	assert.Equal(t, StatusEmailAlreadyUsed, res.GetStatus().GetCode())
 }
 
-// TestCreateBlogContentNull ContentがNullの異常系
-func TestCreateBlogContentNull(t *testing.T) {
-	var createBlog = &blog_grpc.Blog{
-		AuthorId: 888888,
-		Title:    "Title of blog",
-		Content:  "",
-	}
-	ctx := context.Background()
+// TestCreateUserNameNull ユーザ作成UserName未入力の異常系
+func TestCreateUserNameNull(t *testing.T) {
+	var createUser *user_grpc.User
+
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer conn.Close()
 
-	client := blog_grpc.NewBlogServiceClient(conn)
+	client := user_grpc.NewUserServiceClient(conn)
 
-	req := &blog_grpc.CreateBlogRequest{
-		Blog: createBlog,
-	}
-	_, err = client.CreateBlog(context.Background(), req)
-	if err == nil {
-		log.Fatalf("Error message for Content")
+	createUser = &user_grpc.User{
+		UserName: "",
+		Password: "demopassword",
+		Email:    "bbbbb@gmail.com",
 	}
 
+	req := &user_grpc.CreateUserRequest{
+		User: createUser,
+	}
+
+	res, err := client.CreateUser(ctx, req)
+
+	assert.Equal(t, nil, err)
+	assert.Equal(t, StatusUsernameNumError, res.GetStatus().GetCode())
 }
 
-func TestDeleteBlog(t *testing.T) {
-	ctx := context.Background()
+// TestCreateUserNameTooShort ユーザ作成UserName文字数不足の異常系
+func TestCreateUserNameTooShort(t *testing.T) {
+	var createUser *user_grpc.User
+
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer conn.Close()
 
-	client := blog_grpc.NewBlogServiceClient(conn)
+	client := user_grpc.NewUserServiceClient(conn)
 
-	var deleteBlogID int32 = 2
-
-	req := &blog_grpc.DeleteBlogRequest{
-		BlogId: deleteBlogID,
+	createUser = &user_grpc.User{
+		UserName: "demou",
+		Password: "demopassword",
+		Email:    "tooshort@gmail.com",
 	}
 
-	_, err = client.DeleteBlog(ctx, req)
-
-	if err != nil {
-		t.Fatalf("error occured testing DeleteBlog: %v\n", err)
+	req := &user_grpc.CreateUserRequest{
+		User: createUser,
 	}
 
-	blog := &model.Blog{
-		BlogID: deleteBlogID,
-	}
+	res, err := client.CreateUser(ctx, req)
 
-	if !db.DB.First(&blog).RecordNotFound() {
-		t.Fatal("The blog specified was not deleted")
-	}
-	t.Log("finished TestDeleteBlog")
+	assert.Equal(t, nil, err)
+	assert.Equal(t, StatusUsernameNumError, res.GetStatus().GetCode())
 }
 
-func TestGetDB(t *testing.T) {
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer conn.Close()
-	db := db.GetDB()
-	if !db.HasTable(model.Blog{}) {
-		t.Fatal("db does not have table named 'blogs'")
-	}
+// TestCreateUserNameTooLong ユーザ作成UserName文字数超過の異常系
+func TestCreateUserNameTooLong(t *testing.T) {
+	var createUser *user_grpc.User
 
-}
-
-func TestUpdateBlog(t *testing.T) {
-	var updateBlogs []*blog_grpc.Blog
-
-	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer conn.Close()
 
-	updateBlog := &model.Blog{
-		BlogID:   3,
-		AuthorID: 1234567890,
-		Title:    "Updated Title",
-		Content:  "Updated Content",
+	client := user_grpc.NewUserServiceClient(conn)
+
+	createUser = &user_grpc.User{
+		UserName: "demouserdemouserd",
+		Password: "demopassword",
+		Email:    "toolong@gmail.com",
 	}
 
-	client := blog_grpc.NewBlogServiceClient(conn)
-
-	updateBlogs = append(updateBlogs, &blog_grpc.Blog{
-		BlogId:   updateBlog.BlogID,
-		AuthorId: updateBlog.AuthorID,
-		Title:    updateBlog.Title,
-		Content:  updateBlog.Content,
-	})
-
-	for _, blog := range updateBlogs {
-		req := &blog_grpc.UpdateBlogRequest{
-			Blog: blog,
-		}
-		_, err = client.UpdateBlog(ctx, req)
-
-		if err != nil {
-			t.Fatalf("error occured testing UpdateBlog: %v\n", err)
-		}
+	req := &user_grpc.CreateUserRequest{
+		User: createUser,
 	}
 
-	req := &blog_grpc.ReadBlogRequest{
-		BlogId: 3,
-	}
+	res, err := client.CreateUser(ctx, req)
 
-	res, err := client.ReadBlog(context.Background(), req)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	assert.Equal(t, updateBlog.AuthorID, res.GetBlog().GetAuthorId(), "AuthorId of updated blog is not expectd")
-	assert.Equal(t, updateBlog.Title, res.GetBlog().GetTitle(), "Title of updated blog is not expectd")
-	assert.Equal(t, updateBlog.Content, res.GetBlog().GetContent(), "Content of updated blog is not expectd")
-
-	t.Log("finished TestUpdateBlog")
+	assert.Equal(t, nil, err)
+	assert.Equal(t, StatusUsernameNumError, res.GetStatus().GetCode())
 }
 
-func TestListBlog(t *testing.T) {
-	ctx := context.Background()
+// TestLogin
+func TestLogin(t *testing.T) {
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer conn.Close()
 
-	client := blog_grpc.NewBlogServiceClient(conn)
+	client := user_grpc.NewUserServiceClient(conn)
 
-	req := &blog_grpc.ListBlogRequest{}
-	stream, err := client.ListBlog(ctx, req)
-	if err != nil {
-		t.Fatal(err)
-	}
-	for {
-		_, err = stream.Recv()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			log.Fatalf("something happened while listing blog: %v", err)
-		}
+	req := &user_grpc.LoginRequest{
+		Email:    "demo@gmail.com",
+		Password: "demopassword",
 	}
 
-	t.Log("finished TestListBlog")
+	res, err := client.Login(ctx, req)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, "demo@gmail.com", res.GetEmail())
+	assert.NotEqual(t, "", res.GetToken())
 }
+
+// TestTokenAuth
+// func TestTokenAuth(t *testing.T) {
+// 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	defer conn.Close()
+
+// 	client := user_grpc.NewUserServiceClient(conn)
+
+// 	loginReq := &user_grpc.LoginRequest{
+// 		Email:    "demo@gmail.com",
+// 		Password: "demopassword",
+// 	}
+
+// 	loginRes, err := client.Login(ctx, loginReq)
+// 	assert.Equal(t, nil, err)
+// 	assert.Equal(t, "demo@gmail.com", loginRes.GetEmail())
+// 	assert.NotEqual(t, "", loginRes.GetToken())
+
+// 	tokenAuthReq :=
+
+// }
