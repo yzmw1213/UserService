@@ -8,7 +8,7 @@ type UserRepository interface {
 	Create(*model.User) (*model.User, error)
 	Read(int32) (model.User, error)
 	GetUserByEmail(string) (model.User, error)
-	DeleteByID(id int32) error
+	Delete(*model.User) error
 	List() ([]model.User, error)
 	Update(*model.User) (*model.User, error)
 }

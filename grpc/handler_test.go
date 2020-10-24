@@ -6,11 +6,9 @@ import (
 	"net"
 	"testing"
 
-	"github.com/go-playground/assert/v2"
+	"github.com/stretchr/testify/assert"
 	"github.com/yzmw1213/UserService/grpc/user_grpc"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
 )
 
@@ -34,7 +32,7 @@ var demouser = user_grpc.User{
 
 func init() {
 	lis = bufconn.Listen(bufSize)
-	s := makeServer()
+	s := grpc.NewServer()
 	user_grpc.RegisterUserServiceServer(s, &server{})
 	go func() {
 		if err := s.Serve(lis); err != nil {
@@ -91,6 +89,41 @@ func TestCreateUser(t *testing.T) {
 	}
 }
 
+// TestCreateUserEmailInvalidWithAuth ユーザ作成Email無効の異常系
+func TestCreateUserEmailInvalidWithAuth(t *testing.T) {
+	var createUser *user_grpc.User
+	conn, err := grpc.Dial(
+		"bufnet",
+		grpc.WithContextDialer(bufDialer),
+		grpc.WithInsecure(),
+		grpc.WithPerRPCCredentials(&loginCreds{
+			Email:    "demo@gmail.com",
+			Password: "demopassword",
+		}),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+
+	client := user_grpc.NewUserServiceClient(conn)
+
+	createUser = &user_grpc.User{
+		UserName: "テストユーザ名1",
+		Password: "demopassword1",
+		Email:    "aaaaa",
+	}
+
+	req := &user_grpc.CreateUserRequest{
+		User: createUser,
+	}
+
+	res, err := client.CreateUser(ctx, req)
+
+	assert.Equal(t, nil, err)
+	assert.Equal(t, StatusEmailInputInvalid, res.GetStatus().GetCode())
+}
+
 // TestCreateUserEmailInvalid ユーザ作成Email無効の異常系
 func TestCreateUserEmailInvalid(t *testing.T) {
 	var createUser *user_grpc.User
@@ -112,13 +145,10 @@ func TestCreateUserEmailInvalid(t *testing.T) {
 		User: createUser,
 	}
 
-	_, err = client.CreateUser(ctx, req)
-	assert.NotEqual(t, nil, err)
+	res, err := client.CreateUser(ctx, req)
 
-	f, d := getErrorDetail(err)
-
-	assert.Equal(t, "Email", f)
-	assert.Equal(t, StatusEmailInputInvalid, d)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, StatusEmailInputInvalid, res.GetStatus().GetCode())
 }
 
 // TestCreateUserEmailNull ユーザ作成Email未入力の異常系
@@ -142,14 +172,10 @@ func TestCreateUserEmailNull(t *testing.T) {
 		User: createUser,
 	}
 
-	_, err = client.CreateUser(ctx, req)
+	res, err := client.CreateUser(ctx, req)
 
-	assert.NotEqual(t, nil, err)
-
-	f, d := getErrorDetail(err)
-
-	assert.Equal(t, "Email", f)
-	assert.Equal(t, StatusEmailInputInvalid, d)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, StatusEmailInputInvalid, res.GetStatus().GetCode())
 }
 
 // TestCreateUserEmailUsed 既に登録済みのemailを登録する異常系
@@ -180,7 +206,9 @@ func TestCreateUserEmailUsed(t *testing.T) {
 
 	_, err = client.CreateUser(ctx, req)
 
-	assert.Equal(t, nil, err)
+	if err != nil {
+		log.Fatalf("Error message for Email")
+	}
 
 	req = &user_grpc.CreateUserRequest{
 		User: nextCreateUser,
@@ -215,14 +243,10 @@ func TestCreateUserNameNull(t *testing.T) {
 		User: createUser,
 	}
 
-	_, err = client.CreateUser(ctx, req)
+	res, err := client.CreateUser(ctx, req)
 
-	assert.NotEqual(t, nil, err)
-
-	f, d := getErrorDetail(err)
-
-	assert.Equal(t, "UserName", f)
-	assert.Equal(t, StatusUserNameCountError, d)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, StatusUsernameNumError, res.GetStatus().GetCode())
 }
 
 // TestCreateUserNameTooShort ユーザ作成UserName文字数不足の異常系
@@ -247,14 +271,10 @@ func TestCreateUserNameTooShort(t *testing.T) {
 		User: createUser,
 	}
 
-	_, err = client.CreateUser(ctx, req)
+	res, err := client.CreateUser(ctx, req)
 
-	assert.NotEqual(t, nil, err)
-
-	f, d := getErrorDetail(err)
-
-	assert.Equal(t, "UserName", f)
-	assert.Equal(t, StatusUserNameCountError, d)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, StatusUsernameNumError, res.GetStatus().GetCode())
 }
 
 // TestCreateUserNameTooLong ユーザ作成UserName文字数超過の異常系
@@ -279,14 +299,10 @@ func TestCreateUserNameTooLong(t *testing.T) {
 		User: createUser,
 	}
 
-	_, err = client.CreateUser(ctx, req)
+	res, err := client.CreateUser(ctx, req)
 
-	assert.NotEqual(t, nil, err)
-
-	f, d := getErrorDetail(err)
-
-	assert.Equal(t, "UserName", f)
-	assert.Equal(t, StatusUserNameCountError, d)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, StatusUsernameNumError, res.GetStatus().GetCode())
 }
 
 // TestLogin
@@ -310,71 +326,26 @@ func TestLogin(t *testing.T) {
 	assert.NotEqual(t, "", res.GetToken())
 }
 
-// TestLoginByWrongPassword 登録のないパスワードで認証を行う異常系
-func TestLoginByNotRegistered(t *testing.T) {
-	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer conn.Close()
+// TestTokenAuth
+// func TestTokenAuth(t *testing.T) {
+// 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	defer conn.Close()
 
-	client := user_grpc.NewUserServiceClient(conn)
+// 	client := user_grpc.NewUserServiceClient(conn)
 
-	req := &user_grpc.LoginRequest{
-		Email:    "demo@gmail.com",
-		Password: "wrongpassword",
-	}
+// 	loginReq := &user_grpc.LoginRequest{
+// 		Email:    "demo@gmail.com",
+// 		Password: "demopassword",
+// 	}
 
-	_, err = client.Login(ctx, req)
-	assert.NotEqual(t, nil, err)
-}
+// 	loginRes, err := client.Login(ctx, loginReq)
+// 	assert.Equal(t, nil, err)
+// 	assert.Equal(t, "demo@gmail.com", loginRes.GetEmail())
+// 	assert.NotEqual(t, "", loginRes.GetToken())
 
-func getErrorDetail(err error) (string, string) {
-	var field string
-	var description string
-	st, _ := status.FromError(err)
-	for _, detail := range st.Details() {
-		switch dType := detail.(type) {
-		case *errdetails.BadRequest:
-			for _, violation := range dType.GetFieldViolations() {
-				field = violation.GetField()
-				description = violation.GetDescription()
-			}
-		}
-	}
+// 	tokenAuthReq :=
 
-	return field, description
-}
-
-// TestAuth トークンよりユーザー情報を返す
-func TestAuth(t *testing.T) {
-	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer conn.Close()
-
-	client := user_grpc.NewUserServiceClient(conn)
-
-	loginReq := &user_grpc.LoginRequest{
-		Email:    demouser.Email,
-		Password: demouser.Password,
-	}
-
-	loginRes, err := client.Login(ctx, loginReq)
-	token := loginRes.GetToken()
-	email := loginRes.GetEmail()
-
-	assert.Equal(t, nil, err)
-	assert.Equal(t, demouser.Email, email)
-	assert.NotEqual(t, "", token)
-
-	tokenAuthReq := &user_grpc.TokenAuthRequest{
-		Token: token,
-	}
-
-	tokenAuthRes, err := client.TokenAuth(ctx, tokenAuthReq)
-	assert.Equal(t, nil, err)
-	assert.Equal(t, demouser.Email, tokenAuthRes.GetUser().GetEmail())
-
-}
+// }

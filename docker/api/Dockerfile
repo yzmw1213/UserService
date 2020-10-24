@@ -33,6 +33,7 @@ RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSI
 WORKDIR /go/src/github.com/yzmw1213/UserService
 
 COPY . $PKG_PATH
+
 RUN go mod init github.com/yzmw1213/UserService
 RUN go mod download
 

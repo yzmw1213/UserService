@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/yzmw1213/UserService/authorization"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/pkg/errors"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/yzmw1213/UserService/db"
@@ -14,8 +15,6 @@ import (
 	"github.com/yzmw1213/UserService/usecase/repository"
 	"golang.org/x/crypto/bcrypt"
 )
-
-type key int
 
 var (
 	err      error
@@ -25,12 +24,8 @@ var (
 	validate *validator.Validate
 )
 
-const (
-	// secretを環境変数から読む
-	secret = "2FMd5FNSqS/nW2wWJy5S3ppjSHhUnLt8HuwBkTD6HqfPfBBDlykwLA=="
-	// キータイプ
-	stringKey key = iota
-)
+// secretを環境変数から読む
+const secret = "2FMd5FNSqS/nW2wWJy5S3ppjSHhUnLt8HuwBkTD6HqfPfBBDlykwLA=="
 
 // UserInteractor ユーザサービスを提供するメソッド群
 type UserInteractor struct{}
@@ -63,10 +58,10 @@ func (i *UserInteractor) Create(postData *model.User) (*model.User, error) {
 	return postData, nil
 }
 
-// DeleteByID 指定したIDのタグ1件を削除
-func (i *UserInteractor) DeleteByID(id int32) error {
+// Delete ユーザ1件を削除
+func (i *UserInteractor) Delete(postData *model.User) error {
 	DB := db.GetDB()
-	if err := DB.Where("id = ? ", id).Delete(&user).Error; err != nil {
+	if err := DB.Delete(postData).Error; err != nil {
 		return err
 	}
 	return nil
@@ -117,7 +112,7 @@ func listAll(ctx context.Context) ([]model.User, error) {
 func (i *UserInteractor) Update(postData *model.User) (*model.User, error) {
 	DB := db.GetDB()
 	// postされたIdに紐づくuserを取得
-	id := postData.ID
+	id := postData.UserID
 	findUser := &model.User{}
 
 	// User構造体のバリデーション
@@ -125,7 +120,7 @@ func (i *UserInteractor) Update(postData *model.User) (*model.User, error) {
 		return postData, err
 	}
 
-	if err := DB.Where("id = ?", id).First(&findUser).Error; err != nil {
+	if err := DB.Where("user_id = ?", id).First(&findUser).Error; err != nil {
 		log.Fatalf("err: %v", err)
 		return findUser, err
 	}
@@ -140,7 +135,7 @@ func (i *UserInteractor) Update(postData *model.User) (*model.User, error) {
 		return updateUser, err
 	}
 
-	updateUser.ID = findUser.ID
+	updateUser.UserID = findUser.UserID
 
 	if err := DB.Save(updateUser).Error; err != nil {
 		return updateUser, err
@@ -150,9 +145,9 @@ func (i *UserInteractor) Update(postData *model.User) (*model.User, error) {
 }
 
 // Read IDを元にユーザを1件取得する
-func (i *UserInteractor) Read(ID int32) (model.User, error) {
+func (i *UserInteractor) Read(userID int32) (model.User, error) {
 	DB := db.GetDB()
-	row := DB.First(&user, ID)
+	row := DB.First(&user, userID)
 	if err := row.Error; err != nil {
 		return model.User{}, err
 	}
@@ -204,17 +199,85 @@ func (i *UserInteractor) LoginAuth(email string, inputPassword string) (*model.A
 
 	// contextにユーザ情報格納
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, stringKey, findUser.Email)
+	ctx = context.WithValue(ctx, "email", findUser.Email)
 
 	// authのAuthFuncを呼び出す
 	// jwt生成
-	token, err := authorization.CreateToken(&findUser)
+	token, err := createToken(&findUser)
 	if err != nil {
 		return &model.Auth{}, err
 	}
 
 	return &model.Auth{
-		Email: email,
 		Token: token,
+		Email: email,
 	}, nil
+}
+
+// TokenAuth 認証トークンで認証を行い、ユーザ情報を返す
+func (i *UserInteractor) TokenAuth(token string) (model.User, error) {
+	// tokenからemailを取り出す
+	email, err := parseToken(token)
+	if err != nil {
+		return model.User{}, err
+	}
+	// emailでユーザ検索
+	user, err := i.GetUserByEmail(email)
+	if err != nil {
+		return user, err
+	}
+	//
+	return user, nil
+}
+
+// parseToken は jwt トークンから元になった認証情報を取り出す。
+func parseToken(signedString string) (string, error) {
+	token, err := jwt.Parse(signedString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return "", fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(secret), nil
+	})
+	log.Println(signedString)
+
+	if err != nil {
+		if ve, ok := err.(*jwt.ValidationError); ok {
+			if ve.Errors&jwt.ValidationErrorExpired != 0 {
+				return "", errors.Wrapf(err, "%s is expired", signedString)
+
+			}
+
+			return "", errors.Wrapf(err, "%s is invalid", signedString)
+		}
+
+		return "", errors.Wrapf(err, "%s is invalid", signedString)
+	}
+
+	if token == nil {
+
+		return "", fmt.Errorf("not found token in %s", signedString)
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return "", fmt.Errorf("not found claims in %s", signedString)
+	}
+	email := claims["email"].(string)
+
+	return email, nil
+}
+
+func createToken(user *model.User) (string, error) {
+
+	claims := &jwt.MapClaims{
+		"email": user.Email,
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	tokenString, err := token.SignedString([]byte(secret))
+
+	if err != nil {
+		return tokenString, err
+	}
+	return tokenString, nil
 }
