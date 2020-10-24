@@ -9,6 +9,9 @@ message User {
   string user_name = 2;
   string password = 3;
   string email = 4;
+  int32 kind = 5;
+  int32 gender = 6;
+  bool is_super = 7;
 }
 
 // レスポンスのステータス
@@ -21,8 +24,7 @@ message CreateUserRequest {
 }
 
 message CreateUserResponse {
-  User user=1;
-  ResponseStatus status=2;
+  ResponseStatus status=1;
 }
 
 message ReadUserRequest {
@@ -38,7 +40,7 @@ message UpdateUserRequest {
 }
 
 message UpdateUserResponse {
-  User user=1;
+  ResponseStatus status=1;
 }
 
 message DeleteUserRequest {
@@ -46,14 +48,14 @@ message DeleteUserRequest {
 }
 
 message DeleteUserResponse {
-  User user=1;
+  ResponseStatus status=1;
 }
 
 message ListUserRequest {
 }
 
 message ListUserResponse {
-  User user=1;
+  repeated User user=1;
 }
 
 message LoginRequest {
@@ -66,11 +68,20 @@ message LoginResponse {
   string email=2;
 }
 
+message TokenAuthRequest {
+  string token=1;
+}
+
+message TokenAuthResponse {
+  User user=1;
+}
+
 service UserService {
   rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
   rpc ReadUser(ReadUserRequest) returns (ReadUserResponse);
   rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
   rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
-  rpc ListUser(ListUserRequest) returns (stream ListUserResponse);
+  rpc ListUser(ListUserRequest) returns (ListUserResponse);
   rpc Login(LoginRequest) returns (LoginResponse);
+  rpc TokenAuth(TokenAuthRequest) returns (TokenAuthResponse);
 }
