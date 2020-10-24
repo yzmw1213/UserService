@@ -153,7 +153,7 @@ func TestUpdate(t *testing.T) {
 	updatedUser, err := i.Update(&inputUser)
 
 	assert.Equal(t, nil, err)
-	assert.Equal(t, updatedUser.UserID, findUser.UserID)
+	assert.Equal(t, updatedUser.ID, findUser.ID)
 	assert.Equal(t, updatedUser.Email, findUser.Email)
 	assert.NotEqual(t, updatedUser.Password, findUser.Password)
 	assert.NotEqual(t, updatedUser.UserName, findUser.UserName)
@@ -207,7 +207,7 @@ func TestRead(t *testing.T) {
 	findUser, err := i.GetUserByEmail(DemoUser.Email)
 	assert.Equal(t, nil, err)
 
-	user, err := i.Read(findUser.UserID)
+	user, err := i.Read(findUser.ID)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, updatedName, user.UserName)
 	assert.Equal(t, DemoUser.Email, user.Email)
@@ -299,9 +299,9 @@ func TestDeleteNotExistsUser(t *testing.T) {
 	assert.NotEqual(t, nil, err)
 
 	deleteUser = &findUser
-	deleteUser.UserID = 10000
+	deleteUser.ID = 10000
 
-	err = i.Delete(deleteUser)
+	err = i.DeleteByID(10000)
 	assert.Equal(t, nil, err)
 
 	countAfterDelete, err := i.Count(u)
@@ -317,36 +317,19 @@ func TestDelete(t *testing.T) {
 
 	deleteUser = &findUser
 
-	err = i.Delete(deleteUser)
+	err = i.DeleteByID(deleteUser.ID)
 	assert.Equal(t, nil, err)
 
 	findUser, err = i.GetUserByEmail(testemail)
 	assert.NotEqual(t, nil, err)
-	assert.Equal(t, int32(0), findUser.UserID)
+	assert.Equal(t, int32(0), findUser.ID)
 	assert.Equal(t, "", findUser.UserName)
 	assert.Equal(t, "", findUser.Email)
-}
-
-func TestTokenAuth(t *testing.T) {
-	var i UserInteractor
-	initUserTable()
-	user := &DemoUser
-	user.Password = testpassword
-	createUser, err := i.Create(user)
-	assert.Equal(t, nil, err)
-
-	auth, err := i.LoginAuth(createUser.Email, testpassword)
-	assert.Equal(t, nil, err)
-
-	authUser, err := i.TokenAuth(auth.Token)
-	assert.Equal(t, nil, err)
-	assert.Equal(t, createUser, authUser)
 }
 
 // List
 
 // Search
-
 func initUserTable() {
 	DB := db.GetDB()
 	DB.Delete(&model.User{})
