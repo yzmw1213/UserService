@@ -3,5 +3,5 @@ package model
 // Auth 認証情報の構造体
 type Auth struct {
 	Token  string
-	UserID int32
+	UserID uint32
 }

@@ -31,7 +31,7 @@ const (
 	// キータイプ
 	stringKey key = iota
 	// ゼロ値
-	zero int32 = 0
+	zero uint32 = 0
 )
 
 // UserInteractor ユーザサービスを提供するメソッド群
@@ -66,7 +66,7 @@ func (i *UserInteractor) Create(postData *model.User) (*model.User, error) {
 }
 
 // DeleteByID 指定したIDのタグ1件を削除
-func (i *UserInteractor) DeleteByID(id int32) error {
+func (i *UserInteractor) DeleteByID(id uint32) error {
 	DB := db.GetDB()
 	if err := DB.Where("id = ? ", id).Delete(&user).Error; err != nil {
 		return err
@@ -152,7 +152,7 @@ func (i *UserInteractor) Update(postData *model.User) (*model.User, error) {
 }
 
 // Read IDを元にユーザを1件取得する
-func (i *UserInteractor) Read(ID int32) (model.User, error) {
+func (i *UserInteractor) Read(ID uint32) (model.User, error) {
 	DB := db.GetDB()
 	row := DB.First(&user, ID)
 	if err := row.Error; err != nil {
@@ -163,7 +163,7 @@ func (i *UserInteractor) Read(ID int32) (model.User, error) {
 }
 
 // GetUserByUserID UserIDを元にユーザを1件取得する
-func (i *UserInteractor) GetUserByUserID(id int32) (model.User, error) {
+func (i *UserInteractor) GetUserByUserID(id uint32) (model.User, error) {
 	var user model.User
 
 	DB := db.GetDB()

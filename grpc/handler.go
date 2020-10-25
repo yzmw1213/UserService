@@ -22,7 +22,7 @@ const (
 	// StatusUserNameCountError 無効な文字数Username入力時のエラーステータス
 	StatusUserNameCountError string = "USERNAME_NUM_ERROR"
 	// zero ユーザーIDのゼロ値
-	zero int32 = 0
+	zero uint32 = 0
 )
 
 func (s server) CreateUser(ctx context.Context, req *user_grpc.CreateUserRequest) (*user_grpc.CreateUserResponse, error) {
