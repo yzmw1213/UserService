@@ -26,6 +26,8 @@ const (
 	secret = "2FMd5FNSqS/nW2wWJy5S3ppjSHhUnLt8HuwBkTD6HqfPfBBDlykwLA=="
 	//
 	strigKey key = iota
+	// ゼロ値
+	zero int32 = 0
 )
 
 // UnaryServerInterceptor はリクエストごとの認証処理を行う、unary サーバーインターセプターを返す。
@@ -52,7 +54,8 @@ func AuthFunc(ctx context.Context) (context.Context, error) {
 	}
 	//  Emailをtokenに格納
 	claims := &jwt.MapClaims{
-		"email": ctx.Value("email"),
+		// "email": ctx.Value("email"),
+		"id": ctx.Value("id"),
 	}
 	parser := new(jwt.Parser)
 	parsedToken, _, err := parser.ParseUnverified(token, claims)
@@ -74,9 +77,8 @@ func setToken(ctx context.Context, token *jwt.MapClaims) context.Context {
 
 // CreateToken ユーザー情報からトークンを発行する
 func CreateToken(user *model.User) (string, error) {
-
 	claims := &jwt.MapClaims{
-		"email": user.Email,
+		"id": user.ID,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
@@ -89,7 +91,7 @@ func CreateToken(user *model.User) (string, error) {
 }
 
 // ParseToken は jwt トークンから元になった認証情報を取り出す。
-func ParseToken(signedString string) (string, error) {
+func ParseToken(signedString string) (int32, error) {
 	token, err := jwt.Parse(signedString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return "", fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -100,25 +102,27 @@ func ParseToken(signedString string) (string, error) {
 	if err != nil {
 		if ve, ok := err.(*jwt.ValidationError); ok {
 			if ve.Errors&jwt.ValidationErrorExpired != 0 {
-				return "", errors.Wrapf(err, "%s is expired", signedString)
-
+				return zero, errors.Wrapf(err, "%s is expired", signedString)
 			}
 
-			return "", errors.Wrapf(err, "%s is invalid", signedString)
+			return zero, errors.Wrapf(err, "%s is invalid", signedString)
 		}
 
-		return "", errors.Wrapf(err, "%s is invalid", signedString)
+		return zero, errors.Wrapf(err, "%s is invalid", signedString)
 	}
 	if token == nil {
-		return "", fmt.Errorf("not found token in %s", signedString)
+		return zero, fmt.Errorf("not found token in %s", signedString)
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
-
 	if !ok {
-		return "", fmt.Errorf("not found claims in %s", signedString)
+		return zero, fmt.Errorf("not found claims in %s", signedString)
 	}
-	email, ok := claims["email"].(string)
 
-	return email, nil
+	userId, ok := claims["id"].(float64)
+	if !ok {
+		return zero, fmt.Errorf("not found claims in %s", signedString)
+	}
+
+	return int32(userId), nil
 }

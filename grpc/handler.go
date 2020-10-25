@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"errors"
 
 	"github.com/yzmw1213/UserService/authorization"
 
@@ -20,6 +21,8 @@ const (
 	StatusEmailInputInvalid string = "EMAIL_INPUT_INVALID_ERROR"
 	// StatusUserNameCountError 無効な文字数Username入力時のエラーステータス
 	StatusUserNameCountError string = "USERNAME_NUM_ERROR"
+	// zero ユーザーIDのゼロ値
+	zero int32 = 0
 )
 
 func (s server) CreateUser(ctx context.Context, req *user_grpc.CreateUserRequest) (*user_grpc.CreateUserResponse, error) {
@@ -129,27 +132,35 @@ func makeGrpcUser(user *model.User) *user_grpc.User {
 	return gUser
 }
 
+func makeGrpcAuth(auth *model.Auth) *user_grpc.Auth {
+	gAuth := &user_grpc.Auth{
+		Token:  auth.Token,
+		UserId: auth.UserID,
+	}
+	return gAuth
+}
+
 // ログイン
 // Email, Passwordの組み合わせで認証を行う
 func (s server) Login(ctx context.Context, req *user_grpc.LoginRequest) (*user_grpc.LoginResponse, error) {
 	if s.userExistsByEmail(req.GetEmail()) != true {
-		return s.makeLoginResponse("", ""), nil
+		return s.makeLoginResponse(&user_grpc.Auth{Token: "", UserId: zero}), errors.New("user not found")
 	}
 	auth, err := s.Usecase.LoginAuth(req.GetEmail(), req.GetPassword())
 	if err != nil {
-		return s.makeLoginResponse("", ""), err
+		return s.makeLoginResponse(&user_grpc.Auth{Token: "", UserId: zero}), err
 	}
-	return s.makeLoginResponse(auth.Token, auth.Email), nil
+	return s.makeLoginResponse(makeGrpcAuth(auth)), nil
 }
 
 func (s server) TokenAuth(ctx context.Context, req *user_grpc.TokenAuthRequest) (*user_grpc.TokenAuthResponse, error) {
 	// tokenからemailを取り出す
-	email, err := authorization.ParseToken(req.GetToken())
+	id, err := authorization.ParseToken(req.GetToken())
 	if err != nil {
 		return nil, err
 	}
-
-	user, err := s.Usecase.GetUserByEmail(email)
+	// user, err := s.Usecase.GetUserByEmail(email)
+	user, err := s.Usecase.GetUserByUserID(id)
 	if err != nil {
 		return nil, err
 	}
@@ -184,9 +195,8 @@ func (s server) makeUpdateUserResponse(statusCode string) *user_grpc.UpdateUserR
 }
 
 // makeLoginResponse CLoginメソッドのresponseを生成し返す
-func (s server) makeLoginResponse(token string, email string) *user_grpc.LoginResponse {
+func (s server) makeLoginResponse(auth *user_grpc.Auth) *user_grpc.LoginResponse {
 	return &user_grpc.LoginResponse{
-		Token: token,
-		Email: email,
+		Auth: auth,
 	}
 }

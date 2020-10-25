@@ -232,8 +232,7 @@ func TestLoginAuth(t *testing.T) {
 
 	assert.Equal(t, nil, err)
 	assert.NotEqual(t, "", auth.Token)
-	assert.Equal(t, email, auth.Email)
-
+	assert.NotEqual(t, zero, auth.UserID)
 }
 
 // TestLoginAuthPasswordInvalid 登録したパスワードと異なるパスワードでログインを行う異常系

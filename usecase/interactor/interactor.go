@@ -30,6 +30,8 @@ const (
 	secret = "2FMd5FNSqS/nW2wWJy5S3ppjSHhUnLt8HuwBkTD6HqfPfBBDlykwLA=="
 	// キータイプ
 	stringKey key = iota
+	// ゼロ値
+	zero int32 = 0
 )
 
 // UserInteractor ユーザサービスを提供するメソッド群
@@ -160,6 +162,20 @@ func (i *UserInteractor) Read(ID int32) (model.User, error) {
 	return user, nil
 }
 
+// GetUserByUserID UserIDを元にユーザを1件取得する
+func (i *UserInteractor) GetUserByUserID(id int32) (model.User, error) {
+	var user model.User
+
+	DB := db.GetDB()
+	row := DB.Where("id = ?", id).First(&user)
+	if err := row.Error; err != nil {
+		return user, err
+	}
+	DB.Table(db.TableName).Scan(row)
+
+	return user, nil
+}
+
 // GetUserByEmail Emailを元にユーザを1件取得する
 func (i *UserInteractor) GetUserByEmail(email string) (model.User, error) {
 	var user model.User
@@ -204,7 +220,7 @@ func (i *UserInteractor) LoginAuth(email string, inputPassword string) (*model.A
 
 	// contextにユーザ情報格納
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, stringKey, findUser.Email)
+	ctx = context.WithValue(ctx, stringKey, findUser.ID)
 
 	// authのAuthFuncを呼び出す
 	// jwt生成
@@ -214,7 +230,7 @@ func (i *UserInteractor) LoginAuth(email string, inputPassword string) (*model.A
 	}
 
 	return &model.Auth{
-		Email: email,
-		Token: token,
+		UserID: findUser.ID,
+		Token:  token,
 	}, nil
 }

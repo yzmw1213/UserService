@@ -306,8 +306,8 @@ func TestLogin(t *testing.T) {
 
 	res, err := client.Login(ctx, req)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, "demo@gmail.com", res.GetEmail())
-	assert.NotEqual(t, "", res.GetToken())
+	assert.NotEqual(t, "", res.GetAuth().GetToken())
+	assert.NotEqual(t, zero, res.GetAuth().GetUserId())
 }
 
 // TestLoginByWrongPassword 登録のないパスワードで認証を行う異常系
@@ -362,12 +362,12 @@ func TestAuth(t *testing.T) {
 	}
 
 	loginRes, err := client.Login(ctx, loginReq)
-	token := loginRes.GetToken()
-	email := loginRes.GetEmail()
+	token := loginRes.GetAuth().GetToken()
+	userID := loginRes.GetAuth().GetUserId()
 
 	assert.Equal(t, nil, err)
-	assert.Equal(t, demouser.Email, email)
 	assert.NotEqual(t, "", token)
+	assert.NotEqual(t, zero, userID)
 
 	tokenAuthReq := &user_grpc.TokenAuthRequest{
 		Token: token,
