@@ -32,6 +32,17 @@ const (
 	stringKey key = iota
 	// ゼロ値
 	zero uint32 = 0
+	// one 1
+	one uint32 = 1
+)
+
+const (
+	// authorityNormalUser 一般ユーザー
+	authorityNormalUser uint32 = 1
+	// authorityCompanyUserR 企業ユーザー
+	authorityCompanyUserR uint32 = 2
+	// authoritySuperUser 管理者ユーザー
+	authoritySuperUser uint32 = 9
 )
 
 // UserInteractor ユーザサービスを提供するメソッド群
@@ -65,7 +76,7 @@ func (i *UserInteractor) Create(postData *model.User) (*model.User, error) {
 	return postData, nil
 }
 
-// DeleteByID 指定したIDのタグ1件を削除
+// DeleteByID 指定したIDのユーザー1件を削除
 func (i *UserInteractor) DeleteByID(id uint32) error {
 	DB := db.GetDB()
 	if err := DB.Where("id = ? ", id).Delete(&user).Error; err != nil {
@@ -230,7 +241,8 @@ func (i *UserInteractor) LoginAuth(email string, inputPassword string) (*model.A
 	}
 
 	return &model.Auth{
-		UserID: findUser.ID,
-		Token:  token,
+		UserID:    findUser.ID,
+		Authority: findUser.Authority,
+		Token:     token,
 	}, nil
 }

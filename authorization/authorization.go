@@ -119,10 +119,10 @@ func ParseToken(signedString string) (uint32, error) {
 		return zero, fmt.Errorf("not found claims in %s", signedString)
 	}
 
-	userId, ok := claims["id"].(float64)
+	userID, ok := claims["id"].(float64)
 	if !ok {
 		return zero, fmt.Errorf("not found claims in %s", signedString)
 	}
 
-	return uint32(userId), nil
+	return uint32(userID), nil
 }

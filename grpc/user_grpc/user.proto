@@ -9,14 +9,14 @@ message User {
   string user_name = 2;
   string password = 3;
   string email = 4;
-  uint32 kind = 5;
+  uint32 authority = 5;
   uint32 gender = 6;
-  bool is_super = 7;
 }
 
 message Auth {
   string token =1;
   uint32 user_id=2;
+  uint32 authority=3;
 }
 
 // レスポンスのステータス
