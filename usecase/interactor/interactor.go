@@ -31,7 +31,18 @@ const (
 	// キータイプ
 	stringKey key = iota
 	// ゼロ値
-	zero int32 = 0
+	zero uint32 = 0
+	// one 1
+	one uint32 = 1
+)
+
+const (
+	// authorityNormalUser 一般ユーザー
+	authorityNormalUser uint32 = 1
+	// authorityCompanyUserR 企業ユーザー
+	authorityCompanyUserR uint32 = 2
+	// authoritySuperUser 管理者ユーザー
+	authoritySuperUser uint32 = 9
 )
 
 // UserInteractor ユーザサービスを提供するメソッド群
@@ -65,8 +76,8 @@ func (i *UserInteractor) Create(postData *model.User) (*model.User, error) {
 	return postData, nil
 }
 
-// DeleteByID 指定したIDのタグ1件を削除
-func (i *UserInteractor) DeleteByID(id int32) error {
+// DeleteByID 指定したIDのユーザー1件を削除
+func (i *UserInteractor) DeleteByID(id uint32) error {
 	DB := db.GetDB()
 	if err := DB.Where("id = ? ", id).Delete(&user).Error; err != nil {
 		return err
@@ -152,7 +163,7 @@ func (i *UserInteractor) Update(postData *model.User) (*model.User, error) {
 }
 
 // Read IDを元にユーザを1件取得する
-func (i *UserInteractor) Read(ID int32) (model.User, error) {
+func (i *UserInteractor) Read(ID uint32) (model.User, error) {
 	DB := db.GetDB()
 	row := DB.First(&user, ID)
 	if err := row.Error; err != nil {
@@ -163,7 +174,7 @@ func (i *UserInteractor) Read(ID int32) (model.User, error) {
 }
 
 // GetUserByUserID UserIDを元にユーザを1件取得する
-func (i *UserInteractor) GetUserByUserID(id int32) (model.User, error) {
+func (i *UserInteractor) GetUserByUserID(id uint32) (model.User, error) {
 	var user model.User
 
 	DB := db.GetDB()
@@ -230,7 +241,8 @@ func (i *UserInteractor) LoginAuth(email string, inputPassword string) (*model.A
 	}
 
 	return &model.Auth{
-		UserID: findUser.ID,
-		Token:  token,
+		UserID:    findUser.ID,
+		Authority: findUser.Authority,
+		Token:     token,
 	}, nil
 }

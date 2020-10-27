@@ -27,7 +27,7 @@ const (
 	//
 	strigKey key = iota
 	// ゼロ値
-	zero int32 = 0
+	zero uint32 = 0
 )
 
 // UnaryServerInterceptor はリクエストごとの認証処理を行う、unary サーバーインターセプターを返す。
@@ -91,7 +91,7 @@ func CreateToken(user *model.User) (string, error) {
 }
 
 // ParseToken は jwt トークンから元になった認証情報を取り出す。
-func ParseToken(signedString string) (int32, error) {
+func ParseToken(signedString string) (uint32, error) {
 	token, err := jwt.Parse(signedString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return "", fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -119,10 +119,10 @@ func ParseToken(signedString string) (int32, error) {
 		return zero, fmt.Errorf("not found claims in %s", signedString)
 	}
 
-	userId, ok := claims["id"].(float64)
+	userID, ok := claims["id"].(float64)
 	if !ok {
 		return zero, fmt.Errorf("not found claims in %s", signedString)
 	}
 
-	return int32(userId), nil
+	return uint32(userID), nil
 }

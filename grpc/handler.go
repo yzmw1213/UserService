@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"errors"
+	"log"
 
 	"github.com/yzmw1213/UserService/authorization"
 
@@ -22,7 +23,7 @@ const (
 	// StatusUserNameCountError 無効な文字数Username入力時のエラーステータス
 	StatusUserNameCountError string = "USERNAME_NUM_ERROR"
 	// zero ユーザーIDのゼロ値
-	zero int32 = 0
+	zero uint32 = 0
 )
 
 func (s server) CreateUser(ctx context.Context, req *user_grpc.CreateUserRequest) (*user_grpc.CreateUserResponse, error) {
@@ -114,28 +115,32 @@ func (s server) userExistsByEmail(email string) bool {
 
 func makeModel(gUser *user_grpc.User) *model.User {
 	user := &model.User{
-		ID:       gUser.GetUserId(),
-		UserName: gUser.GetUserName(),
-		Password: gUser.GetPassword(),
-		Email:    gUser.GetEmail(),
+		ID:        gUser.GetUserId(),
+		UserName:  gUser.GetUserName(),
+		Password:  gUser.GetPassword(),
+		Email:     gUser.GetEmail(),
+		Authority: gUser.GetAuthority(),
 	}
+
 	return user
 }
 
 func makeGrpcUser(user *model.User) *user_grpc.User {
 	gUser := &user_grpc.User{
-		UserId:   user.ID,
-		UserName: user.UserName,
-		Password: user.Password,
-		Email:    user.Email,
+		UserId:    user.ID,
+		UserName:  user.UserName,
+		Password:  user.Password,
+		Email:     user.Email,
+		Authority: user.Authority,
 	}
 	return gUser
 }
 
 func makeGrpcAuth(auth *model.Auth) *user_grpc.Auth {
 	gAuth := &user_grpc.Auth{
-		Token:  auth.Token,
-		UserId: auth.UserID,
+		Token:     auth.Token,
+		UserId:    auth.UserID,
+		Authority: auth.Authority,
 	}
 	return gAuth
 }
@@ -143,6 +148,8 @@ func makeGrpcAuth(auth *model.Auth) *user_grpc.Auth {
 // ログイン
 // Email, Passwordの組み合わせで認証を行う
 func (s server) Login(ctx context.Context, req *user_grpc.LoginRequest) (*user_grpc.LoginResponse, error) {
+	log.Println(req.Email)
+	log.Println(req.Password)
 	if s.userExistsByEmail(req.GetEmail()) != true {
 		return s.makeLoginResponse(&user_grpc.Auth{Token: "", UserId: zero}), errors.New("user not found")
 	}

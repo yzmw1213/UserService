@@ -3,63 +3,83 @@ package interactor
 import (
 	"testing"
 
-	"github.com/yzmw1213/UserService/db"
-
 	"github.com/go-playground/assert/v2"
 	"github.com/yzmw1213/UserService/domain/model"
 )
 
 var (
 	testemail    = "test@gmail.com"
+	superemail   = "super@gmail.com"
 	testpassword = "password"
 	updatedName  = "updatedName"
 )
 
 var DemoUser = model.User{
-	UserName: "testuser",
-	Password: testpassword,
-	Email:    testemail,
+	UserName:  "testuser",
+	Password:  testpassword,
+	Email:     testemail,
+	Authority: authorityNormalUser,
+}
+
+var DemoSuperUser = model.User{
+	UserName:  "superuser",
+	Password:  testpassword,
+	Email:     superemail,
+	Authority: authoritySuperUser,
+}
+
+var DemoCompanyUser = model.User{
+	UserName:  "companyuser",
+	Password:  testpassword,
+	Email:     superemail,
+	Authority: authorityCompanyUserR,
 }
 
 var NameNullUser = &model.User{
-	UserName: "",
-	Password: testpassword,
-	Email:    testemail,
+	UserName:  "",
+	Password:  testpassword,
+	Email:     testemail,
+	Authority: authorityNormalUser,
 }
 
 var NameTooLongUser = &model.User{
-	UserName: "testusertestusert",
-	Password: testpassword,
-	Email:    testemail,
+	UserName:  "testusertestusert",
+	Password:  testpassword,
+	Email:     testemail,
+	Authority: authorityNormalUser,
 }
 
 var NameTooShortUser = &model.User{
-	UserName: "testu",
-	Password: testpassword,
-	Email:    testemail,
+	UserName:  "testu",
+	Password:  testpassword,
+	Email:     testemail,
+	Authority: authorityNormalUser,
 }
 
 var EmailNullUser = &model.User{
-	UserName: "testuser",
-	Password: testpassword,
-	Email:    "",
+	UserName:  "testuser",
+	Password:  testpassword,
+	Email:     "",
+	Authority: authorityNormalUser,
 }
 
 var EmailInvalidUser1 = &model.User{
-	UserName: "testuser",
-	Password: testpassword,
-	Email:    "test",
+	UserName:  "testuser",
+	Password:  testpassword,
+	Email:     "test",
+	Authority: authorityNormalUser,
 }
 
 var EmailInvalidUser2 = &model.User{
-	UserName: "testuser",
-	Password: testpassword,
-	Email:    "@gmail.com",
+	UserName:  "testuser",
+	Password:  testpassword,
+	Email:     "@gmail.com",
+	Authority: authorityNormalUser,
 }
 
 // TestCreate ユーザー作成の正常系
 func TestCreate(t *testing.T) {
-	initUserTable()
+	// initUserTable()
 	var i UserInteractor
 	user := &DemoUser
 	createdUser, err := i.Create(user)
@@ -68,6 +88,7 @@ func TestCreate(t *testing.T) {
 	assert.Equal(t, user.UserName, createdUser.UserName)
 	assert.Equal(t, user.Email, createdUser.Email)
 	assert.Equal(t, user.Password, createdUser.Password)
+	assert.Equal(t, authorityNormalUser, createdUser.Authority)
 }
 
 func TestCount(t *testing.T) {
@@ -77,6 +98,32 @@ func TestCount(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.Equal(t, 1, count)
 
+}
+
+// TestCreateSuperUser 管理者ユーザー作成の正常系
+func TestCreateSuperUser(t *testing.T) {
+	var i UserInteractor
+	user := &DemoSuperUser
+	createdUser, err := i.Create(user)
+
+	assert.Equal(t, nil, err)
+	assert.Equal(t, user.UserName, createdUser.UserName)
+	assert.Equal(t, user.Email, createdUser.Email)
+	assert.Equal(t, user.Password, createdUser.Password)
+	assert.Equal(t, authoritySuperUser, createdUser.Authority)
+}
+
+// TestCreateCompanyUser 企業ユーザー作成の正常系
+func TestCreateCompanyUser(t *testing.T) {
+	var i UserInteractor
+	user := &DemoCompanyUser
+	createdUser, err := i.Create(user)
+
+	assert.Equal(t, nil, err)
+	assert.Equal(t, user.UserName, createdUser.UserName)
+	assert.Equal(t, user.Email, createdUser.Email)
+	assert.Equal(t, user.Password, createdUser.Password)
+	assert.Equal(t, authorityCompanyUserR, createdUser.Authority)
 }
 
 func TestCreateUserEmailUsed(t *testing.T) {
@@ -216,7 +263,7 @@ func TestRead(t *testing.T) {
 
 func TestReadByIDNotExists(t *testing.T) {
 	var i UserInteractor
-	var searchID int32 = 10000
+	var searchID uint32 = 10000
 
 	_, err := i.Read(searchID)
 	assert.NotEqual(t, nil, err)
@@ -321,7 +368,7 @@ func TestDelete(t *testing.T) {
 
 	findUser, err = i.GetUserByEmail(testemail)
 	assert.NotEqual(t, nil, err)
-	assert.Equal(t, int32(0), findUser.ID)
+	assert.Equal(t, zero, findUser.ID)
 	assert.Equal(t, "", findUser.UserName)
 	assert.Equal(t, "", findUser.Email)
 }
@@ -329,7 +376,7 @@ func TestDelete(t *testing.T) {
 // List
 
 // Search
-func initUserTable() {
-	DB := db.GetDB()
-	DB.Delete(&model.User{})
-}
+// func initUserTable() {
+// 	DB := db.GetDB()
+// 	DB.Delete(&model.User{})
+// }

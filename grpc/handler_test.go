@@ -15,7 +15,10 @@ import (
 )
 
 const (
-	bufSize = 1024 * 1024
+	bufSize        = 1024 * 1024
+	one     uint32 = 1
+	two     uint32 = 2
+	nine    uint32 = 9
 )
 
 type loginCreds struct {
@@ -26,10 +29,25 @@ var lis *bufconn.Listener
 var err error
 var ctx = context.Background()
 
-var demouser = user_grpc.User{
-	UserName: "デモユーザ名1",
-	Email:    "demo@gmail.com",
-	Password: "demopassword",
+var demoUser = user_grpc.User{
+	UserName:  "デモユーザ名1",
+	Email:     "demo@gmail.com",
+	Password:  "demopassword",
+	Authority: one,
+}
+
+var demoSuperUser = user_grpc.User{
+	UserName:  "manager",
+	Email:     "super@gmail.com",
+	Password:  "superpassword",
+	Authority: nine,
+}
+
+var demoCompanyUser = user_grpc.User{
+	UserName:  "companyA",
+	Email:     "company@gmail.com",
+	Password:  "companypassword",
+	Authority: two,
 }
 
 func init() {
@@ -77,7 +95,9 @@ func TestCreateUser(t *testing.T) {
 
 	client := user_grpc.NewUserServiceClient(conn)
 
-	createUsers = append(createUsers, &demouser)
+	createUsers = append(createUsers, &demoUser)
+	createUsers = append(createUsers, &demoSuperUser)
+	createUsers = append(createUsers, &demoCompanyUser)
 
 	for _, user := range createUsers {
 		req := &user_grpc.CreateUserRequest{
@@ -357,8 +377,8 @@ func TestAuth(t *testing.T) {
 	client := user_grpc.NewUserServiceClient(conn)
 
 	loginReq := &user_grpc.LoginRequest{
-		Email:    demouser.Email,
-		Password: demouser.Password,
+		Email:    demoUser.Email,
+		Password: demoUser.Password,
 	}
 
 	loginRes, err := client.Login(ctx, loginReq)
@@ -375,6 +395,6 @@ func TestAuth(t *testing.T) {
 
 	tokenAuthRes, err := client.TokenAuth(ctx, tokenAuthReq)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, demouser.Email, tokenAuthRes.GetUser().GetEmail())
+	assert.Equal(t, demoUser.Email, tokenAuthRes.GetUser().GetEmail())
 
 }
