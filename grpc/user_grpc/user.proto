@@ -4,13 +4,24 @@ package user_grpc;
 
 option go_package = ".;user_grpc";
 
+// ユーザー
 message User {
   uint32 user_id = 1;
   string user_name = 2;
   string password = 3;
-  string email = 4;
-  uint32 authority = 5;
-  uint32 gender = 6;
+  string profile_text = 4;
+  string email = 5;
+  uint32 authority = 6;
+  uint32 gender = 7;
+}
+
+// ユーザープロフィール
+message UserProfile {
+  uint32 user_id = 1;
+  string user_name = 2;
+  string profile_text = 3;
+  uint32 authority = 4;
+  uint32 gender = 5;
 }
 
 message Auth {
@@ -56,6 +67,13 @@ message DeleteUserResponse {
   ResponseStatus status=1;
 }
 
+message ListCompanyRequest {
+}
+
+message ListCompanyResponse {
+  repeated UserProfile profile=1;
+}
+
 message ListUserRequest {
 }
 
@@ -85,6 +103,7 @@ service UserService {
   rpc ReadUser(ReadUserRequest) returns (ReadUserResponse);
   rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
   rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
+  rpc ListCompany(ListCompanyRequest) returns (ListCompanyResponse);
   rpc ListUser(ListUserRequest) returns (ListUserResponse);
   rpc Login(LoginRequest) returns (LoginResponse);
   rpc TokenAuth(TokenAuthRequest) returns (TokenAuthResponse);

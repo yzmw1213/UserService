@@ -8,17 +8,19 @@ import (
 )
 
 var (
-	testemail    = "test@gmail.com"
-	superemail   = "super@gmail.com"
-	testpassword = "password"
-	updatedName  = "updatedName"
+	testemail       = "test@gmail.com"
+	superemail      = "super@gmail.com"
+	testpassword    = "password"
+	demoProfileText = "プロフィールが入ります"
+	updatedName     = "updatedName"
 )
 
 var DemoUser = model.User{
-	UserName:  "testuser",
-	Password:  testpassword,
-	Email:     testemail,
-	Authority: authorityNormalUser,
+	UserName:    "testuser",
+	Password:    testpassword,
+	Email:       testemail,
+	Authority:   authorityNormalUser,
+	ProfileText: demoProfileText,
 }
 
 var DemoSuperUser = model.User{
@@ -29,52 +31,59 @@ var DemoSuperUser = model.User{
 }
 
 var DemoCompanyUser = model.User{
-	UserName:  "companyuser",
-	Password:  testpassword,
-	Email:     superemail,
-	Authority: authorityCompanyUserR,
+	UserName:    "companyuser",
+	Password:    testpassword,
+	Email:       superemail,
+	Authority:   authorityCompanyUser,
+	ProfileText: demoProfileText,
 }
 
 var NameNullUser = &model.User{
-	UserName:  "",
-	Password:  testpassword,
-	Email:     testemail,
-	Authority: authorityNormalUser,
+	UserName:    "",
+	Password:    testpassword,
+	Email:       testemail,
+	Authority:   authorityNormalUser,
+	ProfileText: demoProfileText,
 }
 
 var NameTooLongUser = &model.User{
-	UserName:  "testusertestusert",
-	Password:  testpassword,
-	Email:     testemail,
-	Authority: authorityNormalUser,
+	UserName:    "testusertestusert",
+	Password:    testpassword,
+	Email:       testemail,
+	Authority:   authorityNormalUser,
+	ProfileText: demoProfileText,
 }
 
 var NameTooShortUser = &model.User{
-	UserName:  "testu",
-	Password:  testpassword,
-	Email:     testemail,
-	Authority: authorityNormalUser,
+	UserName:    "testu",
+	Password:    testpassword,
+	Email:       testemail,
+	Authority:   authorityNormalUser,
+	ProfileText: demoProfileText,
 }
 
 var EmailNullUser = &model.User{
-	UserName:  "testuser",
-	Password:  testpassword,
-	Email:     "",
-	Authority: authorityNormalUser,
+	UserName:    "testuser",
+	Password:    testpassword,
+	Email:       "",
+	Authority:   authorityNormalUser,
+	ProfileText: demoProfileText,
 }
 
 var EmailInvalidUser1 = &model.User{
-	UserName:  "testuser",
-	Password:  testpassword,
-	Email:     "test",
-	Authority: authorityNormalUser,
+	UserName:    "testuser",
+	Password:    testpassword,
+	Email:       "test",
+	Authority:   authorityNormalUser,
+	ProfileText: demoProfileText,
 }
 
 var EmailInvalidUser2 = &model.User{
-	UserName:  "testuser",
-	Password:  testpassword,
-	Email:     "@gmail.com",
-	Authority: authorityNormalUser,
+	UserName:    "testuser",
+	Password:    testpassword,
+	Email:       "@gmail.com",
+	Authority:   authorityNormalUser,
+	ProfileText: demoProfileText,
 }
 
 // TestCreate ユーザー作成の正常系
@@ -123,7 +132,7 @@ func TestCreateCompanyUser(t *testing.T) {
 	assert.Equal(t, user.UserName, createdUser.UserName)
 	assert.Equal(t, user.Email, createdUser.Email)
 	assert.Equal(t, user.Password, createdUser.Password)
-	assert.Equal(t, authorityCompanyUserR, createdUser.Authority)
+	assert.Equal(t, authorityCompanyUser, createdUser.Authority)
 }
 
 func TestCreateUserEmailUsed(t *testing.T) {
