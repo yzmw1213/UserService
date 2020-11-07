@@ -30,24 +30,27 @@ var err error
 var ctx = context.Background()
 
 var demoUser = user_grpc.User{
-	UserName:  "デモユーザ名1",
-	Email:     "demo@gmail.com",
-	Password:  "demopassword",
-	Authority: one,
+	UserName:    "デモユーザ名1",
+	Email:       "demo@gmail.com",
+	Password:    "demopassword",
+	ProfileText: "プロフィールが入ります",
+	Authority:   one,
 }
 
 var demoSuperUser = user_grpc.User{
-	UserName:  "manager",
-	Email:     "super@gmail.com",
-	Password:  "superpassword",
-	Authority: nine,
+	UserName:    "manager",
+	Email:       "super@gmail.com",
+	Password:    "superpassword",
+	ProfileText: "プロフィールが入ります",
+	Authority:   nine,
 }
 
 var demoCompanyUser = user_grpc.User{
-	UserName:  "companyA",
-	Email:     "company@gmail.com",
-	Password:  "companypassword",
-	Authority: two,
+	UserName:    "companyA",
+	Email:       "company@gmail.com",
+	Password:    "companypassword",
+	ProfileText: "プロフィールが入ります",
+	Authority:   two,
 }
 
 func init() {

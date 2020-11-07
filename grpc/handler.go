@@ -58,6 +58,24 @@ func (s server) DeleteUser(ctx context.Context, req *user_grpc.DeleteUserRequest
 	return res, nil
 }
 
+func (s server) ListCompany(ctx context.Context, req *user_grpc.ListCompanyRequest) (*user_grpc.ListCompanyResponse, error) {
+	log.Println("ListCompany")
+	rows, err := s.Usecase.ListAllCompany()
+	if err != nil {
+		return nil, err
+	}
+	var companys []*user_grpc.UserProfile
+	for _, user := range rows {
+		user := makeGrpcUserProfile(&user)
+		companys = append(companys, user)
+	}
+	res := &user_grpc.ListCompanyResponse{
+		Profile: companys,
+	}
+
+	return res, nil
+}
+
 func (s server) ListUser(ctx context.Context, req *user_grpc.ListUserRequest) (*user_grpc.ListUserResponse, error) {
 	rows, err := s.Usecase.List()
 	if err != nil {
@@ -120,6 +138,8 @@ func makeModel(gUser *user_grpc.User) *model.User {
 		Password:  gUser.GetPassword(),
 		Email:     gUser.GetEmail(),
 		Authority: gUser.GetAuthority(),
+		Gender:    gUser.GetGender(),
+		// ProfileText: gUser.GetProfileText(),
 	}
 
 	return user
@@ -132,6 +152,18 @@ func makeGrpcUser(user *model.User) *user_grpc.User {
 		Password:  user.Password,
 		Email:     user.Email,
 		Authority: user.Authority,
+		Gender:    user.Gender,
+	}
+	return gUser
+}
+
+func makeGrpcUserProfile(user *model.User) *user_grpc.UserProfile {
+	gUser := &user_grpc.UserProfile{
+		UserId:      user.ID,
+		UserName:    user.UserName,
+		ProfileText: user.ProfileText,
+		Authority:   user.Authority,
+		Gender:      user.Gender,
 	}
 	return gUser
 }
@@ -161,12 +193,11 @@ func (s server) Login(ctx context.Context, req *user_grpc.LoginRequest) (*user_g
 }
 
 func (s server) TokenAuth(ctx context.Context, req *user_grpc.TokenAuthRequest) (*user_grpc.TokenAuthResponse, error) {
-	// tokenからemailを取り出す
+	// tokenからidを取り出す
 	id, err := authorization.ParseToken(req.GetToken())
 	if err != nil {
 		return nil, err
 	}
-	// user, err := s.Usecase.GetUserByEmail(email)
 	user, err := s.Usecase.GetUserByUserID(id)
 	if err != nil {
 		return nil, err
