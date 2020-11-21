@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/go-playground/assert/v2"
-	"github.com/yzmw1213/UserService/grpc/user_grpc"
+	"github.com/yzmw1213/UserService/grpc/userservice"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
@@ -29,7 +29,7 @@ var lis *bufconn.Listener
 var err error
 var ctx = context.Background()
 
-var demoUser = user_grpc.User{
+var demoUser = userservice.User{
 	UserName:    "デモユーザ名1",
 	Email:       "demo@gmail.com",
 	Password:    "demopassword",
@@ -37,7 +37,7 @@ var demoUser = user_grpc.User{
 	Authority:   one,
 }
 
-var demoSuperUser = user_grpc.User{
+var demoSuperUser = userservice.User{
 	UserName:    "manager",
 	Email:       "super@gmail.com",
 	Password:    "superpassword",
@@ -45,7 +45,7 @@ var demoSuperUser = user_grpc.User{
 	Authority:   nine,
 }
 
-var demoCompanyUser = user_grpc.User{
+var demoCompanyUser = userservice.User{
 	UserName:    "companyA",
 	Email:       "company@gmail.com",
 	Password:    "companypassword",
@@ -56,7 +56,7 @@ var demoCompanyUser = user_grpc.User{
 func init() {
 	lis = bufconn.Listen(bufSize)
 	s := makeServer()
-	user_grpc.RegisterUserServiceServer(s, &server{})
+	userservice.RegisterUserServiceServer(s, &server{})
 	go func() {
 		if err := s.Serve(lis); err != nil {
 			log.Fatal(err)
@@ -88,7 +88,7 @@ func (c *loginCreds) RequireTransportSecurity() bool {
 
 // TestCreateUser ユーザ作成正常系
 func TestCreateUser(t *testing.T) {
-	var createUsers []*user_grpc.User
+	var createUsers []*userservice.User
 
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
@@ -96,14 +96,14 @@ func TestCreateUser(t *testing.T) {
 	}
 	defer conn.Close()
 
-	client := user_grpc.NewUserServiceClient(conn)
+	client := userservice.NewUserServiceClient(conn)
 
 	createUsers = append(createUsers, &demoUser)
 	createUsers = append(createUsers, &demoSuperUser)
 	createUsers = append(createUsers, &demoCompanyUser)
 
 	for _, user := range createUsers {
-		req := &user_grpc.CreateUserRequest{
+		req := &userservice.CreateUserRequest{
 			User: user,
 		}
 
@@ -116,22 +116,22 @@ func TestCreateUser(t *testing.T) {
 
 // TestCreateUserEmailInvalid ユーザ作成Email無効の異常系
 func TestCreateUserEmailInvalid(t *testing.T) {
-	var createUser *user_grpc.User
+	var createUser *userservice.User
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer conn.Close()
 
-	client := user_grpc.NewUserServiceClient(conn)
+	client := userservice.NewUserServiceClient(conn)
 
-	createUser = &user_grpc.User{
+	createUser = &userservice.User{
 		UserName: "テストユーザ名1",
 		Password: "demopassword1",
 		Email:    "aaaaa",
 	}
 
-	req := &user_grpc.CreateUserRequest{
+	req := &userservice.CreateUserRequest{
 		User: createUser,
 	}
 
@@ -146,22 +146,22 @@ func TestCreateUserEmailInvalid(t *testing.T) {
 
 // TestCreateUserEmailNull ユーザ作成Email未入力の異常系
 func TestCreateUserEmailNull(t *testing.T) {
-	var createUser *user_grpc.User
+	var createUser *userservice.User
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer conn.Close()
 
-	client := user_grpc.NewUserServiceClient(conn)
+	client := userservice.NewUserServiceClient(conn)
 
-	createUser = &user_grpc.User{
+	createUser = &userservice.User{
 		UserName: "テストユーザ名2",
 		Password: "demopassword",
 		Email:    "",
 	}
 
-	req := &user_grpc.CreateUserRequest{
+	req := &userservice.CreateUserRequest{
 		User: createUser,
 	}
 
@@ -183,21 +183,21 @@ func TestCreateUserEmailUsed(t *testing.T) {
 	}
 	defer conn.Close()
 
-	client := user_grpc.NewUserServiceClient(conn)
+	client := userservice.NewUserServiceClient(conn)
 
-	firstCreateUser := &user_grpc.User{
+	firstCreateUser := &userservice.User{
 		UserName: "テストユーザ名3",
 		Password: "demopassword3",
 		Email:    "used@gmail.com",
 	}
 
-	nextCreateUser := &user_grpc.User{
+	nextCreateUser := &userservice.User{
 		UserName: "テストユーザ名4",
 		Password: "demopassword4",
 		Email:    "used@gmail.com",
 	}
 
-	req := &user_grpc.CreateUserRequest{
+	req := &userservice.CreateUserRequest{
 		User: firstCreateUser,
 	}
 
@@ -205,7 +205,7 @@ func TestCreateUserEmailUsed(t *testing.T) {
 
 	assert.Equal(t, nil, err)
 
-	req = &user_grpc.CreateUserRequest{
+	req = &userservice.CreateUserRequest{
 		User: nextCreateUser,
 	}
 
@@ -218,7 +218,7 @@ func TestCreateUserEmailUsed(t *testing.T) {
 
 // TestCreateUserNameNull ユーザ作成UserName未入力の異常系
 func TestCreateUserNameNull(t *testing.T) {
-	var createUser *user_grpc.User
+	var createUser *userservice.User
 
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
@@ -226,15 +226,15 @@ func TestCreateUserNameNull(t *testing.T) {
 	}
 	defer conn.Close()
 
-	client := user_grpc.NewUserServiceClient(conn)
+	client := userservice.NewUserServiceClient(conn)
 
-	createUser = &user_grpc.User{
+	createUser = &userservice.User{
 		UserName: "",
 		Password: "demopassword",
 		Email:    "bbbbb@gmail.com",
 	}
 
-	req := &user_grpc.CreateUserRequest{
+	req := &userservice.CreateUserRequest{
 		User: createUser,
 	}
 
@@ -250,7 +250,7 @@ func TestCreateUserNameNull(t *testing.T) {
 
 // TestCreateUserNameTooShort ユーザ作成UserName文字数不足の異常系
 func TestCreateUserNameTooShort(t *testing.T) {
-	var createUser *user_grpc.User
+	var createUser *userservice.User
 
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
@@ -258,15 +258,15 @@ func TestCreateUserNameTooShort(t *testing.T) {
 	}
 	defer conn.Close()
 
-	client := user_grpc.NewUserServiceClient(conn)
+	client := userservice.NewUserServiceClient(conn)
 
-	createUser = &user_grpc.User{
+	createUser = &userservice.User{
 		UserName: "demou",
 		Password: "demopassword",
 		Email:    "tooshort@gmail.com",
 	}
 
-	req := &user_grpc.CreateUserRequest{
+	req := &userservice.CreateUserRequest{
 		User: createUser,
 	}
 
@@ -282,7 +282,7 @@ func TestCreateUserNameTooShort(t *testing.T) {
 
 // TestCreateUserNameTooLong ユーザ作成UserName文字数超過の異常系
 func TestCreateUserNameTooLong(t *testing.T) {
-	var createUser *user_grpc.User
+	var createUser *userservice.User
 
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
@@ -290,15 +290,15 @@ func TestCreateUserNameTooLong(t *testing.T) {
 	}
 	defer conn.Close()
 
-	client := user_grpc.NewUserServiceClient(conn)
+	client := userservice.NewUserServiceClient(conn)
 
-	createUser = &user_grpc.User{
+	createUser = &userservice.User{
 		UserName: "demouserdemouserd",
 		Password: "demopassword",
 		Email:    "toolong@gmail.com",
 	}
 
-	req := &user_grpc.CreateUserRequest{
+	req := &userservice.CreateUserRequest{
 		User: createUser,
 	}
 
@@ -320,9 +320,9 @@ func TestLogin(t *testing.T) {
 	}
 	defer conn.Close()
 
-	client := user_grpc.NewUserServiceClient(conn)
+	client := userservice.NewUserServiceClient(conn)
 
-	req := &user_grpc.LoginRequest{
+	req := &userservice.LoginRequest{
 		Email:    "demo@gmail.com",
 		Password: "demopassword",
 	}
@@ -341,9 +341,9 @@ func TestLoginByNotRegistered(t *testing.T) {
 	}
 	defer conn.Close()
 
-	client := user_grpc.NewUserServiceClient(conn)
+	client := userservice.NewUserServiceClient(conn)
 
-	req := &user_grpc.LoginRequest{
+	req := &userservice.LoginRequest{
 		Email:    "demo@gmail.com",
 		Password: "wrongpassword",
 	}
@@ -377,9 +377,9 @@ func TestAuth(t *testing.T) {
 	}
 	defer conn.Close()
 
-	client := user_grpc.NewUserServiceClient(conn)
+	client := userservice.NewUserServiceClient(conn)
 
-	loginReq := &user_grpc.LoginRequest{
+	loginReq := &userservice.LoginRequest{
 		Email:    demoUser.Email,
 		Password: demoUser.Password,
 	}
@@ -392,7 +392,7 @@ func TestAuth(t *testing.T) {
 	assert.NotEqual(t, "", token)
 	assert.NotEqual(t, zero, userID)
 
-	tokenAuthReq := &user_grpc.TokenAuthRequest{
+	tokenAuthReq := &userservice.TokenAuthRequest{
 		Token: token,
 	}
 

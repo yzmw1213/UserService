@@ -7,7 +7,7 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/yzmw1213/UserService/grpc/user_grpc"
+	"github.com/yzmw1213/UserService/grpc/userservice"
 	"github.com/yzmw1213/UserService/usecase/interactor"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -28,7 +28,7 @@ func NewUserGrpcServer() {
 
 	s := makeServer()
 
-	user_grpc.RegisterUserServiceServer(s, server)
+	userservice.RegisterUserServiceServer(s, server)
 
 	// Register reflection service on gRPC server.
 	reflection.Register(s)

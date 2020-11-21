@@ -8,7 +8,7 @@ import (
 	"github.com/yzmw1213/UserService/authorization"
 
 	"github.com/yzmw1213/UserService/domain/model"
-	"github.com/yzmw1213/UserService/grpc/user_grpc"
+	"github.com/yzmw1213/UserService/grpc/userservice"
 )
 
 const (
@@ -26,7 +26,7 @@ const (
 	zero uint32 = 0
 )
 
-func (s server) CreateUser(ctx context.Context, req *user_grpc.CreateUserRequest) (*user_grpc.CreateUserResponse, error) {
+func (s server) CreateUser(ctx context.Context, req *userservice.CreateUserRequest) (*userservice.CreateUserResponse, error) {
 	user := makeModel(req.GetUser())
 
 	// 既に同一のemailによる登録がないかチェック
@@ -46,7 +46,7 @@ func (s server) CreateUser(ctx context.Context, req *user_grpc.CreateUserRequest
 	return s.makeCreateUserResponse(StatusCreateUserSuccess), nil
 }
 
-func (s server) DeleteUser(ctx context.Context, req *user_grpc.DeleteUserRequest) (*user_grpc.DeleteUserResponse, error) {
+func (s server) DeleteUser(ctx context.Context, req *userservice.DeleteUserRequest) (*userservice.DeleteUserResponse, error) {
 	postData := req.GetUserId()
 	user := &model.User{
 		ID: postData,
@@ -54,62 +54,62 @@ func (s server) DeleteUser(ctx context.Context, req *user_grpc.DeleteUserRequest
 	if err := s.Usecase.DeleteByID(user.ID); err != nil {
 		return nil, err
 	}
-	res := &user_grpc.DeleteUserResponse{}
+	res := &userservice.DeleteUserResponse{}
 	return res, nil
 }
 
-func (s server) ListCompany(ctx context.Context, req *user_grpc.ListCompanyRequest) (*user_grpc.ListCompanyResponse, error) {
+func (s server) ListCompany(ctx context.Context, req *userservice.ListCompanyRequest) (*userservice.ListCompanyResponse, error) {
 	log.Println("ListCompany")
 	rows, err := s.Usecase.ListAllCompany()
 	if err != nil {
 		return nil, err
 	}
-	var companys []*user_grpc.UserProfile
+	var companys []*userservice.UserProfile
 	for _, user := range rows {
 		user := makeGrpcUserProfile(&user)
 		companys = append(companys, user)
 	}
-	res := &user_grpc.ListCompanyResponse{
+	res := &userservice.ListCompanyResponse{
 		Profile: companys,
 	}
 
 	return res, nil
 }
 
-func (s server) ListUser(ctx context.Context, req *user_grpc.ListUserRequest) (*user_grpc.ListUserResponse, error) {
+func (s server) ListUser(ctx context.Context, req *userservice.ListUserRequest) (*userservice.ListUserResponse, error) {
 	rows, err := s.Usecase.List()
 	if err != nil {
 		return nil, err
 	}
-	var users []*user_grpc.User
+	var users []*userservice.User
 	for _, user := range rows {
 		user := makeGrpcUser(&user)
 		users = append(users, user)
 	}
-	res := &user_grpc.ListUserResponse{
+	res := &userservice.ListUserResponse{
 		User: users,
 	}
 
 	return res, nil
 }
 
-func (s server) ReadUser(ctx context.Context, req *user_grpc.ReadUserRequest) (*user_grpc.ReadUserResponse, error) {
+func (s server) ReadUser(ctx context.Context, req *userservice.ReadUserRequest) (*userservice.ReadUserResponse, error) {
 	userID := req.GetUserId()
 	// userName := req.GetUserName()
 	row, err := s.Usecase.Read(userID)
 	if err != nil {
 		return nil, err
 	}
-	user := &user_grpc.User{
+	user := &userservice.User{
 		UserId: row.ID,
 	}
-	res := &user_grpc.ReadUserResponse{
+	res := &userservice.ReadUserResponse{
 		User: user,
 	}
 	return res, nil
 }
 
-func (s server) UpdateUser(ctx context.Context, req *user_grpc.UpdateUserRequest) (*user_grpc.UpdateUserResponse, error) {
+func (s server) UpdateUser(ctx context.Context, req *userservice.UpdateUserRequest) (*userservice.UpdateUserResponse, error) {
 	user := makeModel(req.GetUser())
 
 	if _, err := s.Usecase.Update(user); err != nil {
@@ -131,7 +131,7 @@ func (s server) userExistsByEmail(email string) bool {
 	return true
 }
 
-func makeModel(gUser *user_grpc.User) *model.User {
+func makeModel(gUser *userservice.User) *model.User {
 	user := &model.User{
 		ID:        gUser.GetUserId(),
 		UserName:  gUser.GetUserName(),
@@ -145,8 +145,8 @@ func makeModel(gUser *user_grpc.User) *model.User {
 	return user
 }
 
-func makeGrpcUser(user *model.User) *user_grpc.User {
-	gUser := &user_grpc.User{
+func makeGrpcUser(user *model.User) *userservice.User {
+	gUser := &userservice.User{
 		UserId:    user.ID,
 		UserName:  user.UserName,
 		Password:  user.Password,
@@ -157,8 +157,8 @@ func makeGrpcUser(user *model.User) *user_grpc.User {
 	return gUser
 }
 
-func makeGrpcUserProfile(user *model.User) *user_grpc.UserProfile {
-	gUser := &user_grpc.UserProfile{
+func makeGrpcUserProfile(user *model.User) *userservice.UserProfile {
+	gUser := &userservice.UserProfile{
 		UserId:      user.ID,
 		UserName:    user.UserName,
 		ProfileText: user.ProfileText,
@@ -168,8 +168,8 @@ func makeGrpcUserProfile(user *model.User) *user_grpc.UserProfile {
 	return gUser
 }
 
-func makeGrpcAuth(auth *model.Auth) *user_grpc.Auth {
-	gAuth := &user_grpc.Auth{
+func makeGrpcAuth(auth *model.Auth) *userservice.Auth {
+	gAuth := &userservice.Auth{
 		Token:     auth.Token,
 		UserId:    auth.UserID,
 		Authority: auth.Authority,
@@ -179,20 +179,20 @@ func makeGrpcAuth(auth *model.Auth) *user_grpc.Auth {
 
 // ログイン
 // Email, Passwordの組み合わせで認証を行う
-func (s server) Login(ctx context.Context, req *user_grpc.LoginRequest) (*user_grpc.LoginResponse, error) {
+func (s server) Login(ctx context.Context, req *userservice.LoginRequest) (*userservice.LoginResponse, error) {
 	log.Println(req.Email)
 	log.Println(req.Password)
 	if s.userExistsByEmail(req.GetEmail()) != true {
-		return s.makeLoginResponse(&user_grpc.Auth{Token: "", UserId: zero}), errors.New("user not found")
+		return s.makeLoginResponse(&userservice.Auth{Token: "", UserId: zero}), errors.New("user not found")
 	}
 	auth, err := s.Usecase.LoginAuth(req.GetEmail(), req.GetPassword())
 	if err != nil {
-		return s.makeLoginResponse(&user_grpc.Auth{Token: "", UserId: zero}), err
+		return s.makeLoginResponse(&userservice.Auth{Token: "", UserId: zero}), err
 	}
 	return s.makeLoginResponse(makeGrpcAuth(auth)), nil
 }
 
-func (s server) TokenAuth(ctx context.Context, req *user_grpc.TokenAuthRequest) (*user_grpc.TokenAuthResponse, error) {
+func (s server) TokenAuth(ctx context.Context, req *userservice.TokenAuthRequest) (*userservice.TokenAuthResponse, error) {
 	// tokenからidを取り出す
 	id, err := authorization.ParseToken(req.GetToken())
 	if err != nil {
@@ -203,16 +203,16 @@ func (s server) TokenAuth(ctx context.Context, req *user_grpc.TokenAuthRequest) 
 		return nil, err
 	}
 
-	return &user_grpc.TokenAuthResponse{
+	return &userservice.TokenAuthResponse{
 		User: makeGrpcUser(&user),
 	}, nil
 }
 
 // makeCreateUserResponse CreateUserメソッドのresponseを生成し返す
-func (s server) makeCreateUserResponse(statusCode string) *user_grpc.CreateUserResponse {
-	res := &user_grpc.CreateUserResponse{}
+func (s server) makeCreateUserResponse(statusCode string) *userservice.CreateUserResponse {
+	res := &userservice.CreateUserResponse{}
 	if statusCode != "" {
-		responseStatus := &user_grpc.ResponseStatus{
+		responseStatus := &userservice.ResponseStatus{
 			Code: statusCode,
 		}
 		res.Status = responseStatus
@@ -221,10 +221,10 @@ func (s server) makeCreateUserResponse(statusCode string) *user_grpc.CreateUserR
 }
 
 // makeUpdateUserResponse UpdateUserメソッドのresponseを生成し返す
-func (s server) makeUpdateUserResponse(statusCode string) *user_grpc.UpdateUserResponse {
-	res := &user_grpc.UpdateUserResponse{}
+func (s server) makeUpdateUserResponse(statusCode string) *userservice.UpdateUserResponse {
+	res := &userservice.UpdateUserResponse{}
 	if statusCode != "" {
-		responseStatus := &user_grpc.ResponseStatus{
+		responseStatus := &userservice.ResponseStatus{
 			Code: statusCode,
 		}
 		res.Status = responseStatus
@@ -233,8 +233,8 @@ func (s server) makeUpdateUserResponse(statusCode string) *user_grpc.UpdateUserR
 }
 
 // makeLoginResponse CLoginメソッドのresponseを生成し返す
-func (s server) makeLoginResponse(auth *user_grpc.Auth) *user_grpc.LoginResponse {
-	return &user_grpc.LoginResponse{
+func (s server) makeLoginResponse(auth *userservice.Auth) *userservice.LoginResponse {
+	return &userservice.LoginResponse{
 		Auth: auth,
 	}
 }
