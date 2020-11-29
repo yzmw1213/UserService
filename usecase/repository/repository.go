@@ -10,5 +10,6 @@ type UserRepository interface {
 	GetUserByEmail(string) (model.User, error)
 	DeleteByID(id uint32) error
 	List() ([]model.User, error)
+	ListAllNormalUser() ([]model.User, error)
 	Update(*model.User) (*model.User, error)
 }

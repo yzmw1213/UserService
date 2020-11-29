@@ -12,7 +12,6 @@ type User struct {
 	Password    string `validate:"min=6,max=32"`
 	UserName    string `validate:"min=6,max=16"`
 	Email       string `validate:"email"`
-	Gender      uint32 `validate:"oneof=0 1 2 9"`
-	Authority   uint32 `validate:"oneof=0 1 2 9"`
+	Authority   uint32 `validate:"oneof=0 1 9"`
 	ProfileText string `validate:"max=240"`
 }
