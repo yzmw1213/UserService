@@ -77,17 +77,17 @@ func (s server) ListCompany(ctx context.Context, req *userservice.ListCompanyReq
 }
 
 func (s server) ListUser(ctx context.Context, req *userservice.ListUserRequest) (*userservice.ListUserResponse, error) {
-	rows, err := s.Usecase.List()
+	rows, err := s.Usecase.ListAllNormalUser()
 	if err != nil {
 		return nil, err
 	}
-	var users []*userservice.User
+	var profiles []*userservice.UserProfile
 	for _, user := range rows {
-		user := makeGrpcUser(&user)
-		users = append(users, user)
+		user := makeGrpcUserProfile(&user)
+		profiles = append(profiles, user)
 	}
 	res := &userservice.ListUserResponse{
-		User: users,
+		Profile: profiles,
 	}
 
 	return res, nil
@@ -138,8 +138,6 @@ func makeModel(gUser *userservice.User) *model.User {
 		Password:  gUser.GetPassword(),
 		Email:     gUser.GetEmail(),
 		Authority: gUser.GetAuthority(),
-		Gender:    gUser.GetGender(),
-		// ProfileText: gUser.GetProfileText(),
 	}
 
 	return user
@@ -152,7 +150,6 @@ func makeGrpcUser(user *model.User) *userservice.User {
 		Password:  user.Password,
 		Email:     user.Email,
 		Authority: user.Authority,
-		Gender:    user.Gender,
 	}
 	return gUser
 }
@@ -163,7 +160,6 @@ func makeGrpcUserProfile(user *model.User) *userservice.UserProfile {
 		UserName:    user.UserName,
 		ProfileText: user.ProfileText,
 		Authority:   user.Authority,
-		Gender:      user.Gender,
 	}
 	return gUser
 }

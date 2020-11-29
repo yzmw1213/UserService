@@ -124,6 +124,20 @@ func (i *UserInteractor) ListAllCompany() ([]model.User, error) {
 	return users, nil
 }
 
+// ListAllNormalUser 一般ユーザーリストを返却
+func (i *UserInteractor) ListAllNormalUser() ([]model.User, error) {
+	DB := db.GetDB()
+	var users []model.User
+	err := DB.Where("authority = ?", authorityNormalUser).Select("users.id, users.user_name, users.profile_text, users.authority").Find(&users).Error
+	log.Println("users", users)
+	if err != nil {
+		fmt.Println("Error happened")
+		return []model.User{}, err
+	}
+
+	return users, nil
+}
+
 // listAll 全件取得
 func listAll(ctx context.Context) ([]model.User, error) {
 	DB := db.GetDB()

@@ -20,8 +20,13 @@ Goで構築するマイクロサービスのユーザサービス
 ## 機能一覧
 - ユーザー
   - 新規登録、編集、削除、全件取得
-  - 一般アカウント、企業アカウント、管理アカウントの登録
+  - 管理者権限ユーザーによるログイン
   - go-playground/validatorを用いたバリデーション
   - ログインIDとパスワードによる認証・jwt発行
 - サービス間通信
   - Envoyプロキシを介した他サービスとの通信
+
+## 関連レポジトリ
+- [フロントエンド](https://github.com/yzmw1213/Front)
+- [Envoyプロキシ](https://github.com/yzmw1213/Proxy)
+- [投稿サービス](https://github.com/yzmw1213/PostService)

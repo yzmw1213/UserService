@@ -45,14 +45,6 @@ var demoSuperUser = userservice.User{
 	Authority:   nine,
 }
 
-var demoCompanyUser = userservice.User{
-	UserName:    "companyA",
-	Email:       "company@gmail.com",
-	Password:    "companypassword",
-	ProfileText: "プロフィールが入ります",
-	Authority:   two,
-}
-
 func init() {
 	lis = bufconn.Listen(bufSize)
 	s := makeServer()
@@ -100,7 +92,6 @@ func TestCreateUser(t *testing.T) {
 
 	createUsers = append(createUsers, &demoUser)
 	createUsers = append(createUsers, &demoSuperUser)
-	createUsers = append(createUsers, &demoCompanyUser)
 
 	for _, user := range createUsers {
 		req := &userservice.CreateUserRequest{

@@ -30,14 +30,6 @@ var DemoSuperUser = model.User{
 	Authority: authoritySuperUser,
 }
 
-var DemoCompanyUser = model.User{
-	UserName:    "companyuser",
-	Password:    testpassword,
-	Email:       superemail,
-	Authority:   authorityCompanyUser,
-	ProfileText: demoProfileText,
-}
-
 var NameNullUser = &model.User{
 	UserName:    "",
 	Password:    testpassword,
@@ -120,19 +112,6 @@ func TestCreateSuperUser(t *testing.T) {
 	assert.Equal(t, user.Email, createdUser.Email)
 	assert.Equal(t, user.Password, createdUser.Password)
 	assert.Equal(t, authoritySuperUser, createdUser.Authority)
-}
-
-// TestCreateCompanyUser 企業ユーザー作成の正常系
-func TestCreateCompanyUser(t *testing.T) {
-	var i UserInteractor
-	user := &DemoCompanyUser
-	createdUser, err := i.Create(user)
-
-	assert.Equal(t, nil, err)
-	assert.Equal(t, user.UserName, createdUser.UserName)
-	assert.Equal(t, user.Email, createdUser.Email)
-	assert.Equal(t, user.Password, createdUser.Password)
-	assert.Equal(t, authorityCompanyUser, createdUser.Authority)
 }
 
 func TestCreateUserEmailUsed(t *testing.T) {

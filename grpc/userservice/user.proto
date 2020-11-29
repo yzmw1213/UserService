@@ -12,7 +12,6 @@ message User {
   string profile_text = 4;
   string email = 5;
   uint32 authority = 6;
-  uint32 gender = 7;
 }
 
 // ユーザープロフィール
@@ -21,7 +20,6 @@ message UserProfile {
   string user_name = 2;
   string profile_text = 3;
   uint32 authority = 4;
-  uint32 gender = 5;
 }
 
 message Auth {
@@ -78,7 +76,7 @@ message ListUserRequest {
 }
 
 message ListUserResponse {
-  repeated User user=1;
+  repeated UserProfile profile=1;
 }
 
 message LoginRequest {
@@ -103,6 +101,7 @@ service UserService {
   rpc ReadUser(ReadUserRequest) returns (ReadUserResponse);
   rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
   rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
+  // ListCompany 廃止予定
   rpc ListCompany(ListCompanyRequest) returns (ListCompanyResponse);
   rpc ListUser(ListUserRequest) returns (ListUserResponse);
   rpc Login(LoginRequest) returns (LoginResponse);
