@@ -101,7 +101,8 @@ func (s server) ReadUser(ctx context.Context, req *userservice.ReadUserRequest) 
 		return nil, err
 	}
 	user := &userservice.User{
-		UserId: row.ID,
+		UserId:   row.ID,
+		UserName: row.UserName,
 	}
 	res := &userservice.ReadUserResponse{
 		User: user,
@@ -179,13 +180,15 @@ func (s server) Login(ctx context.Context, req *userservice.LoginRequest) (*user
 	log.Println(req.Email)
 	log.Println(req.Password)
 	if s.userExistsByEmail(req.GetEmail()) != true {
-		return s.makeLoginResponse(&userservice.Auth{Token: "", UserId: zero}), errors.New("user not found")
+		return s.makeLoginResponse(&userservice.Auth{Token: "", UserId: zero}, &userservice.User{UserId: zero, UserName: ""}), errors.New("user not found")
 	}
 	auth, err := s.Usecase.LoginAuth(req.GetEmail(), req.GetPassword())
+	user, err := s.Usecase.GetUserByUserID(auth.UserID)
 	if err != nil {
-		return s.makeLoginResponse(&userservice.Auth{Token: "", UserId: zero}), err
+		return s.makeLoginResponse(&userservice.Auth{Token: "", UserId: zero}, &userservice.User{UserId: zero, UserName: ""}), err
 	}
-	return s.makeLoginResponse(makeGrpcAuth(auth)), nil
+
+	return s.makeLoginResponse(makeGrpcAuth(auth), makeGrpcUser(&user)), nil
 }
 
 func (s server) TokenAuth(ctx context.Context, req *userservice.TokenAuthRequest) (*userservice.TokenAuthResponse, error) {
@@ -229,8 +232,9 @@ func (s server) makeUpdateUserResponse(statusCode string) *userservice.UpdateUse
 }
 
 // makeLoginResponse CLoginメソッドのresponseを生成し返す
-func (s server) makeLoginResponse(auth *userservice.Auth) *userservice.LoginResponse {
+func (s server) makeLoginResponse(auth *userservice.Auth, user *userservice.User) *userservice.LoginResponse {
 	return &userservice.LoginResponse{
 		Auth: auth,
+		User: user,
 	}
 }

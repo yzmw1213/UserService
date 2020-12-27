@@ -322,6 +322,8 @@ func TestLogin(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.NotEqual(t, "", res.GetAuth().GetToken())
 	assert.NotEqual(t, zero, res.GetAuth().GetUserId())
+	assert.NotEqual(t, "", res.GetUser().GetUserName())
+	assert.NotEqual(t, zero, res.GetUser().GetUserId())
 }
 
 // TestLoginByWrongPassword 登録のないパスワードで認証を行う異常系

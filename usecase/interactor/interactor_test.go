@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/go-playground/assert/v2"
+	"github.com/yzmw1213/UserService/db"
 	"github.com/yzmw1213/UserService/domain/model"
 )
 
@@ -80,16 +81,23 @@ var EmailInvalidUser2 = &model.User{
 
 // TestCreate ユーザー作成の正常系
 func TestCreate(t *testing.T) {
-	// initUserTable()
+	initUserTable()
 	var i UserInteractor
-	user := &DemoUser
-	createdUser, err := i.Create(user)
-
-	assert.Equal(t, nil, err)
-	assert.Equal(t, user.UserName, createdUser.UserName)
-	assert.Equal(t, user.Email, createdUser.Email)
-	assert.Equal(t, user.Password, createdUser.Password)
-	assert.Equal(t, authorityNormalUser, createdUser.Authority)
+	var users []model.User
+	// user := &DemoUser
+	users = append(users, DemoUser)
+	users = append(users, DemoUser)
+	users = append(users, DemoUser)
+	users = append(users, DemoUser)
+	users = append(users, DemoUser)
+	for _, u := range users {
+		createdUser, err := i.Create(&u)
+		assert.Equal(t, nil, err)
+		assert.Equal(t, u.UserName, createdUser.UserName)
+		assert.Equal(t, u.Email, createdUser.Email)
+		assert.Equal(t, u.Password, createdUser.Password)
+		assert.Equal(t, authorityNormalUser, createdUser.Authority)
+	}
 }
 
 func TestCount(t *testing.T) {
@@ -363,8 +371,7 @@ func TestDelete(t *testing.T) {
 
 // List
 
-// Search
-// func initUserTable() {
-// 	DB := db.GetDB()
-// 	DB.Delete(&model.User{})
-// }
+func initUserTable() {
+	DB := db.GetDB()
+	DB.Delete(&model.User{})
+}
