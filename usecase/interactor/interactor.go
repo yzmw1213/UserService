@@ -3,6 +3,7 @@ package interactor
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 
@@ -53,8 +54,13 @@ var _ repository.UserRepository = (*UserInteractor)(nil)
 // Create ユーザ1件を作成
 func (i *UserInteractor) Create(postData *model.User) (*model.User, error) {
 	validate = validator.New()
-	DB := db.GetDB()
+	// DB := db.GetDB()
 	createUser := postData
+
+	u, _ := i.GetUserByEmail(createUser.Email)
+	if u.ID != 0 {
+		return postData, errors.New("email already used")
+	}
 
 	// User構造体のバリデーション
 	if err := validate.Struct(postData); err != nil {
@@ -69,19 +75,32 @@ func (i *UserInteractor) Create(postData *model.User) (*model.User, error) {
 		return createUser, err
 	}
 
-	if err := DB.Create(createUser).Error; err != nil {
+	// トランザクション開始
+	tx := db.StartBegin()
+
+	if err := tx.Create(createUser).Error; err != nil {
+		db.EndRollback()
 		return postData, err
 	}
 
+	// トランザクションを終了しコミット
+	db.EndCommit()
 	return postData, nil
 }
 
 // DeleteByID 指定したIDのユーザー1件を削除
 func (i *UserInteractor) DeleteByID(id uint32) error {
-	DB := db.GetDB()
-	if err := DB.Where("id = ? ", id).Delete(&user).Error; err != nil {
+	var user model.User
+
+	// トランザクション開始
+	tx := db.StartBegin()
+
+	if err := tx.Where("id = ? ", id).Delete(&user).Error; err != nil {
+		db.EndRollback()
 		return err
 	}
+	// トランザクションを終了しコミット
+	db.EndCommit()
 	return nil
 }
 
@@ -172,6 +191,11 @@ func (i *UserInteractor) Update(postData *model.User) (*model.User, error) {
 	}
 
 	updateUser := postData
+
+	// 更新時に入力されたemailが他のユーザーと重複していないか判定
+	if i.OtherUserExistsByEmail(updateUser.Email, updateUser.ID) == true {
+		return postData, errors.New("email already used")
+	}
 	// パスワードをhash
 	hash, err := createHashPassword(postData.Password)
 	// hashしたパスワードをSaveするuserにセット
@@ -183,10 +207,15 @@ func (i *UserInteractor) Update(postData *model.User) (*model.User, error) {
 
 	updateUser.ID = findUser.ID
 
-	if err := DB.Save(updateUser).Error; err != nil {
+	// トランザクション開始
+	tx := db.StartBegin()
+
+	if err := tx.Save(updateUser).Error; err != nil {
+		db.EndRollback()
 		return updateUser, err
 	}
-
+	// トランザクションを終了しコミット
+	db.EndCommit()
 	return updateUser, nil
 }
 
@@ -227,6 +256,16 @@ func (i *UserInteractor) GetUserByEmail(email string) (model.User, error) {
 	DB.Table(db.TableName).Scan(row)
 
 	return user, nil
+}
+
+// GetOtherUserExistsByEmail　指定したユーザ以外にemailが重複するユーザが存在するか判定
+func (i *UserInteractor) OtherUserExistsByEmail(email string, id uint32) bool {
+	var user model.User
+	var count int
+
+	DB := db.GetDB()
+	DB.Not("id = ?", id).Where("email = ?", email).Find(&user).Count(&count)
+	return count > 0
 }
 
 func createHashPassword(password string) (string, error) {

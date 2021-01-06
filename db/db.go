@@ -13,7 +13,9 @@ import (
 
 var (
 	// DB データベース構造体
-	DB   *gorm.DB
+	DB *gorm.DB
+	// tx トランザクション
+	tx   *gorm.DB
 	user model.User
 	// TableName サービステーブル名
 	TableName string = "users"
@@ -53,6 +55,25 @@ func Close() {
 func GetDB() *gorm.DB {
 	initDB()
 	return DB
+}
+
+// StartBegin トランザクションを開始する。
+func StartBegin() *gorm.DB {
+	DB = GetDB()
+	tx = DB.Begin()
+	return tx
+}
+
+// EndRollback トランザクションを終了しロールバックする。
+func EndRollback() {
+	tx.Rollback()
+	tx = nil
+}
+
+// EndCommit トランザクションを終了しコミットする。
+func EndCommit() {
+	tx.Commit()
+	tx = nil
 }
 
 func autoMigration() {
