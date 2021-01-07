@@ -8,6 +8,7 @@ type UserRepository interface {
 	Create(*model.User) (*model.User, error)
 	Read(uint32) (model.User, error)
 	GetUserByEmail(string) (model.User, error)
+	OtherUserExistsByEmail(string, uint32) bool
 	DeleteByID(id uint32) error
 	List() ([]model.User, error)
 	ListAllNormalUser() ([]model.User, error)

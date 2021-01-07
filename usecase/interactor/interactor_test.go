@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	testemail       = "test@gmail.com"
-	superemail      = "super@gmail.com"
+	testemail       = "test@example.com"
+	superemail      = "super@example.com"
 	testpassword    = "password"
 	demoProfileText = "プロフィールが入ります"
 	updatedName     = "updatedName"
@@ -74,7 +74,7 @@ var EmailInvalidUser1 = &model.User{
 var EmailInvalidUser2 = &model.User{
 	UserName:    "testuser",
 	Password:    testpassword,
-	Email:       "@gmail.com",
+	Email:       "@example.com",
 	Authority:   authorityNormalUser,
 	ProfileText: demoProfileText,
 }
@@ -86,9 +86,13 @@ func TestCreate(t *testing.T) {
 	var users []model.User
 	// user := &DemoUser
 	users = append(users, DemoUser)
+	DemoUser.Email = "acregh@example.com"
 	users = append(users, DemoUser)
+	DemoUser.Email = "uiwefg@example.com"
 	users = append(users, DemoUser)
+	DemoUser.Email = "dgjs5ts@example.com"
 	users = append(users, DemoUser)
+	DemoUser.Email = "th5fa6j@example.com"
 	users = append(users, DemoUser)
 	for _, u := range users {
 		createdUser, err := i.Create(&u)
@@ -138,7 +142,6 @@ func TestGetUserByEmail(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.Equal(t, DemoUser.UserName, user.UserName)
 	assert.Equal(t, DemoUser.Email, user.Email)
-	assert.Equal(t, DemoUser.Password, user.Password)
 }
 
 func TestCreateNameNull(t *testing.T) {
@@ -239,6 +242,19 @@ func TestUpdateNameTooShort(t *testing.T) {
 	inputUser := findUser
 
 	inputUser.UserName = "testu"
+	inputUser.Password = "password"
+
+	_, err = i.Update(&inputUser)
+	assert.NotEqual(t, nil, err)
+}
+
+func TestUpdateUserEmailUsed(t *testing.T) {
+	var i UserInteractor
+	findUser, err := i.GetUserByEmail(DemoUser.Email)
+	assert.Equal(t, nil, err)
+	inputUser := findUser
+
+	inputUser.Email = testemail
 	inputUser.Password = "password"
 
 	_, err = i.Update(&inputUser)

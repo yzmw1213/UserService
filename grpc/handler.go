@@ -113,6 +113,11 @@ func (s server) ReadUser(ctx context.Context, req *userservice.ReadUserRequest) 
 func (s server) UpdateUser(ctx context.Context, req *userservice.UpdateUserRequest) (*userservice.UpdateUserResponse, error) {
 	user := makeModel(req.GetUser())
 
+	// 既に同一のemailによる登録がないかチェック
+	if s.userExistsByEmail(user.Email) == true {
+		return s.makeUpdateUserResponse(StatusEmailAlreadyUsed), nil
+	}
+
 	if _, err := s.Usecase.Update(user); err != nil {
 		return nil, err
 	}
