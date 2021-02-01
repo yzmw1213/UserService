@@ -19,11 +19,13 @@ import (
 type key int
 
 var (
-	err      error
-	user     model.User
-	users    []model.User
-	rows     *sql.Rows
-	validate *validator.Validate
+	err       error
+	user      model.User
+	relation  model.Relation
+	users     []model.User
+	relations []model.Relation
+	rows      *sql.Rows
+	validate  *validator.Validate
 )
 
 const (
@@ -226,7 +228,8 @@ func (i *UserInteractor) Read(ID uint32) (model.User, error) {
 	if err := row.Error; err != nil {
 		return model.User{}, err
 	}
-	DB.Table(db.TableName).Scan(row)
+	DB.Table(db.UserTableName).Scan(row)
+	user.ProfileText = "よろしくお願いしますよろしくお願いしますよろしくお願いします"
 	return user, nil
 }
 
@@ -239,8 +242,9 @@ func (i *UserInteractor) GetUserByUserID(id uint32) (model.User, error) {
 	if err := row.Error; err != nil {
 		return user, err
 	}
-	DB.Table(db.TableName).Scan(row)
+	DB.Table(db.UserTableName).Scan(row)
 
+	user.ProfileText = "よろしくお願いしますよろしくお願いしますよろしくお願いします"
 	return user, nil
 }
 
@@ -253,7 +257,7 @@ func (i *UserInteractor) GetUserByEmail(email string) (model.User, error) {
 	if err := row.Error; err != nil {
 		return user, err
 	}
-	DB.Table(db.TableName).Scan(row)
+	DB.Table(db.UserTableName).Scan(row)
 
 	return user, nil
 }
@@ -312,4 +316,31 @@ func (i *UserInteractor) LoginAuth(email string, inputPassword string) (*model.A
 		Authority: findUser.Authority,
 		Token:     token,
 	}, nil
+}
+
+// Follow ユーザーをフォロー
+func (i *UserInteractor) Follow(postData *model.Relation) (*model.Relation, error) {
+	DB := db.GetDB()
+	if err := DB.Create(postData).Error; err != nil {
+		return postData, err
+	}
+	return postData, nil
+}
+
+// UnFollow フォロー解除
+func (i *UserInteractor) UnFollow(postData *model.Relation) (*model.Relation, error) {
+	DB := db.GetDB()
+	if err := DB.Where("follower_user_id = ?", postData.FollowerUserID).Where("followed_user_id = ?", postData.FollowedUserID).Delete(postData).Error; err != nil {
+		return postData, err
+	}
+	return postData, nil
+}
+
+// countFollowUserByFollower フォロワーユーザーIDを元にフォローされている数を取得する
+func countFollowUserByFollower(ID uint32) int {
+	var count int
+	DB := db.GetDB()
+	DB.Where("follower_user_id = ?", ID).Model(&relation).Count(&count)
+
+	return count
 }

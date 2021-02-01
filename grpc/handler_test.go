@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/go-playground/assert/v2"
+	"github.com/yzmw1213/UserService/db"
+	"github.com/yzmw1213/UserService/domain/model"
 	"github.com/yzmw1213/UserService/grpc/userservice"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
@@ -31,7 +33,6 @@ var ctx = context.Background()
 
 var demoUser = userservice.User{
 	UserName:    "デモユーザ名1",
-	Email:       "demo@gmail.com",
 	Password:    "demopassword",
 	ProfileText: "プロフィールが入ります",
 	Authority:   one,
@@ -80,7 +81,7 @@ func (c *loginCreds) RequireTransportSecurity() bool {
 
 // TestCreateUser ユーザ作成正常系
 func TestCreateUser(t *testing.T) {
-	var createUsers []*userservice.User
+	initUserTable()
 
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
@@ -89,20 +90,14 @@ func TestCreateUser(t *testing.T) {
 	defer conn.Close()
 
 	client := userservice.NewUserServiceClient(conn)
-
-	createUsers = append(createUsers, &demoUser)
-	createUsers = append(createUsers, &demoSuperUser)
-
-	for _, user := range createUsers {
-		req := &userservice.CreateUserRequest{
-			User: user,
-		}
-
-		res, err := client.CreateUser(ctx, req)
-
-		assert.Equal(t, nil, err)
-		assert.Equal(t, StatusCreateUserSuccess, res.GetStatus().GetCode())
-	}
+	_, err = createDefaultUser(client, "demo@example.com", one)
+	assert.Equal(t, nil, err)
+	_, err = createDefaultUser(client, "wqrh3tws8@example.com", one)
+	assert.Equal(t, nil, err)
+	_, err = createDefaultUser(client, "rewthet3a@example.com", one)
+	assert.Equal(t, nil, err)
+	_, err = createDefaultUser(client, "super@example.com", nine)
+	assert.Equal(t, nil, err)
 }
 
 // TestCreateUserEmailInvalid ユーザ作成Email無効の異常系
@@ -314,7 +309,7 @@ func TestLogin(t *testing.T) {
 	client := userservice.NewUserServiceClient(conn)
 
 	req := &userservice.LoginRequest{
-		Email:    "demo@gmail.com",
+		Email:    "demo@example.com",
 		Password: "demopassword",
 	}
 
@@ -373,7 +368,7 @@ func TestAuth(t *testing.T) {
 	client := userservice.NewUserServiceClient(conn)
 
 	loginReq := &userservice.LoginRequest{
-		Email:    demoUser.Email,
+		Email:    "demo@example.com",
 		Password: demoUser.Password,
 	}
 
@@ -391,6 +386,61 @@ func TestAuth(t *testing.T) {
 
 	tokenAuthRes, err := client.TokenAuth(ctx, tokenAuthReq)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, demoUser.Email, tokenAuthRes.GetUser().GetEmail())
+	assert.Equal(t, "demo@example.com", tokenAuthRes.GetUser().GetEmail())
+}
 
+func TestFollowUser(t *testing.T) {
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+
+	client := userservice.NewUserServiceClient(conn)
+
+	followReq := &userservice.FollowUserRequet{
+		FollwerUserId: 1,
+		FollwedUserId: 2,
+	}
+
+	res, err := client.FollowUser(ctx, followReq)
+	assert.Equal(t, StatusFollowSuccess, res.GetStatus().GetCode())
+	assert.Equal(t, nil, err)
+}
+
+func TestUnFollowUser(t *testing.T) {
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+
+	client := userservice.NewUserServiceClient(conn)
+
+	unfollowReq := &userservice.UnFollowUserRequet{
+		FollwerUserId: 1,
+		FollwedUserId: 2,
+	}
+
+	res, err := client.UnFollowUser(ctx, unfollowReq)
+	assert.Equal(t, StatusUnFollowSuccess, res.GetStatus().GetCode())
+	assert.Equal(t, nil, err)
+}
+
+func createDefaultUser(c userservice.UserServiceClient, email string, authority uint32) (*userservice.CreateUserResponse, error) {
+	user := &demoUser
+	user.Email = email
+	user.Authority = authority
+
+	req := &userservice.CreateUserRequest{
+		User: user,
+	}
+
+	return c.CreateUser(ctx, req)
+}
+
+func initUserTable() {
+	DB := db.GetDB()
+	DB.Delete(&model.User{})
+	DB.Delete(&model.Relation{})
 }

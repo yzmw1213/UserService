@@ -17,8 +17,10 @@ var (
 	// tx トランザクション
 	tx   *gorm.DB
 	user model.User
-	// TableName サービステーブル名
-	TableName string = "users"
+	// UserTableName ユーザーサービステーブル名
+	UserTableName string = "users"
+	// RelationTableName フォロー関係テーブル名
+	RelationTableName string = "relations"
 )
 
 func initDB() {
@@ -79,4 +81,5 @@ func EndCommit() {
 func autoMigration() {
 	fmt.Println("migration")
 	DB.AutoMigrate(&model.User{})
+	DB.AutoMigrate(&model.Relation{})
 }
