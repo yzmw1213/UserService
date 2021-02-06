@@ -78,6 +78,9 @@ message LoginRequest {
   string password=2;
 }
 
+message GuestLoginRequest {
+}
+
 message LoginResponse {
   Auth auth=1;
   User user=2;
@@ -116,6 +119,7 @@ service UserService {
   rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
   rpc ListUser(ListUserRequest) returns (ListUserResponse);
   rpc Login(LoginRequest) returns (LoginResponse);
+  rpc GuestLogin(GuestLoginRequest) returns (LoginResponse);
   rpc TokenAuth(TokenAuthRequest) returns (TokenAuthResponse);
   rpc FollowUser(FollowUserRequet) returns (FollowUserResponse);
   rpc UnFollowUser(UnFollowUserRequet) returns (UnFollowUserResponse);

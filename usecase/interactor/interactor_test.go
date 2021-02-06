@@ -2,6 +2,7 @@ package interactor
 
 import (
 	"log"
+	"strconv"
 	"testing"
 
 	"github.com/go-playground/assert/v2"
@@ -360,6 +361,18 @@ func TestUnFollow(t *testing.T) {
 	assert.Equal(t, afterFollowCount, beforeFollowCount-1)
 }
 
+func TestCreateDemoUser(t *testing.T) {
+	var i UserInteractor
+	auth, err := i.CreateDemoUser()
+	assert.Equal(t, nil, err)
+	assert.NotEqual(t, zero, auth.UserID)
+
+	user, err := i.GetUserByUserID(auth.UserID)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, "ゲストユーザー"+strconv.Itoa(int(auth.UserID)), user.UserName)
+	assert.Equal(t, strconv.Itoa(int(auth.UserID))+"demouser@example.com", user.Email)
+}
+
 // TestLoginAuthPasswordNull パスワード空白でログインを行う異常系
 func TestLoginAuthPasswordNull(t *testing.T) {
 	var i UserInteractor
@@ -436,6 +449,13 @@ func TestDelete(t *testing.T) {
 	assert.Equal(t, zero, findUser.ID)
 	assert.Equal(t, "", findUser.UserName)
 	assert.Equal(t, "", findUser.Email)
+}
+
+func TestGetMaxUserID(t *testing.T) {
+	maxID := getMaxUserID()
+
+	log.Println("max ID", maxID)
+	assert.NotEqual(t, zero, maxID)
 }
 
 func selectUsers() (uint32, uint32, uint32) {

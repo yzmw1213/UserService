@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strconv"
 
 	"github.com/yzmw1213/UserService/authorization"
 
@@ -45,6 +46,8 @@ const (
 	// authoritySuperUser 管理者ユーザー
 	authoritySuperUser uint32 = 9
 )
+
+var demoUser = model.User{UserName: "", Email: "guest@example.com", Password: "password", Authority: one}
 
 // UserInteractor ユーザサービスを提供するメソッド群
 type UserInteractor struct{}
@@ -286,6 +289,41 @@ func (i *UserInteractor) LoginAuth(email string, inputPassword string) (*model.A
 		Authority: findUser.Authority,
 		Token:     token,
 	}, nil
+}
+
+// CreateDemoUser ゲストログインユーザーを作成し、トークンを返す
+func (i *UserInteractor) CreateDemoUser() (*model.Auth, error) {
+	// ユーザーIDの最大値を取得
+	maxID := getMaxUserID()
+	maxID++
+
+	// maxIDをdemoユーザーのEmailに格納
+	uniqueDemoUser := demoUser
+
+	uniqueDemoUser.UserName = "ゲストユーザー" + strconv.Itoa(maxID)
+	uniqueDemoUser.Email = strconv.Itoa(maxID) + "demouser@example.com"
+	// Create実行
+	_, err := i.Create(&uniqueDemoUser)
+
+	if err != nil {
+		return &model.Auth{}, err
+	}
+	// LoginAuth実行
+	auth, err := i.LoginAuth(uniqueDemoUser.Email, "password")
+	if err != nil {
+		return &model.Auth{}, err
+	}
+	// 認証情報を返す
+	return auth, nil
+}
+
+func getMaxUserID() int {
+	var result int
+	DB := db.GetDB()
+	row := DB.Table(db.UserTableName).Select("max(id)").Row()
+
+	row.Scan(&result)
+	return result
 }
 
 // Follow ユーザーをフォロー

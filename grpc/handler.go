@@ -178,6 +178,19 @@ func (s server) Login(ctx context.Context, req *userservice.LoginRequest) (*user
 	return s.makeLoginResponse(makeGrpcAuth(auth), makeGrpcUser(&user)), nil
 }
 
+func (s server) GuestLogin(ctx context.Context, req *userservice.GuestLoginRequest) (*userservice.LoginResponse, error) {
+	// ゲストアカウントを作成し、認証情報を取得
+	auth, err := s.Usecase.CreateDemoUser()
+	// 認証情報を元にユーザー情報を取得
+	user, err := s.Usecase.GetUserByUserID(auth.UserID)
+
+	if err != nil {
+		return s.makeLoginResponse(&userservice.Auth{Token: "", UserId: zero}, &userservice.User{UserId: zero, UserName: ""}), err
+	}
+
+	return s.makeLoginResponse(makeGrpcAuth(auth), makeGrpcUser(&user)), nil
+}
+
 func (s server) TokenAuth(ctx context.Context, req *userservice.TokenAuthRequest) (*userservice.TokenAuthResponse, error) {
 	// tokenからidを取り出す
 	id, err := authorization.ParseToken(req.GetToken())
