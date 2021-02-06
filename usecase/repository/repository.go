@@ -6,6 +6,8 @@ import "github.com/yzmw1213/UserService/domain/model"
 type UserRepository interface {
 	LoginAuth(string, string) (*model.Auth, error)
 	Create(*model.User) (*model.User, error)
+	CreateDemoUser() (*model.Auth, error)
+	CreateDemoSuperUser() (*model.Auth, error)
 	GetUserByEmail(string) (model.User, error)
 	OtherUserExistsByEmail(string, uint32) bool
 	DeleteByID(id uint32) error

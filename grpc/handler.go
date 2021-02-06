@@ -178,6 +178,34 @@ func (s server) Login(ctx context.Context, req *userservice.LoginRequest) (*user
 	return s.makeLoginResponse(makeGrpcAuth(auth), makeGrpcUser(&user)), nil
 }
 
+// ゲストユーザーログイン
+func (s server) GuestLogin(ctx context.Context, req *userservice.GuestLoginRequest) (*userservice.LoginResponse, error) {
+	// ゲストアカウントを作成し、認証情報を取得
+	auth, err := s.Usecase.CreateDemoUser()
+	// 認証情報を元にユーザー情報を取得
+	user, err := s.Usecase.GetUserByUserID(auth.UserID)
+
+	if err != nil {
+		return s.makeLoginResponse(&userservice.Auth{Token: "", UserId: zero}, &userservice.User{UserId: zero, UserName: ""}), err
+	}
+
+	return s.makeLoginResponse(makeGrpcAuth(auth), makeGrpcUser(&user)), nil
+}
+
+// 管理者ユーザーログイン
+func (s server) SuperUserLogin(ctx context.Context, req *userservice.SuperUserLoginRequest) (*userservice.LoginResponse, error) {
+	// 管理アカウントを作成し、認証情報を取得
+	auth, err := s.Usecase.CreateDemoSuperUser()
+	// 認証情報を元にユーザー情報を取得
+	user, err := s.Usecase.GetUserByUserID(auth.UserID)
+
+	if err != nil {
+		return s.makeLoginResponse(&userservice.Auth{Token: "", UserId: zero}, &userservice.User{UserId: zero, UserName: ""}), err
+	}
+
+	return s.makeLoginResponse(makeGrpcAuth(auth), makeGrpcUser(&user)), nil
+}
+
 func (s server) TokenAuth(ctx context.Context, req *userservice.TokenAuthRequest) (*userservice.TokenAuthResponse, error) {
 	// tokenからidを取り出す
 	id, err := authorization.ParseToken(req.GetToken())
@@ -244,10 +272,15 @@ func (s server) makeUpdateUserResponse(statusCode string) *userservice.UpdateUse
 	return res
 }
 
-// makeLoginResponse CLoginメソッドのresponseを生成し返す
+// makeLoginResponse Loginメソッドのresponseを生成し返す
 func (s server) makeLoginResponse(auth *userservice.Auth, user *userservice.User) *userservice.LoginResponse {
 	return &userservice.LoginResponse{
 		Auth: auth,
 		User: user,
 	}
+}
+
+// makeErrorLoginResponse Loginメソッドがエラー時のresponseを生成し返す
+func (s server) makeErrorLoginResponse() *userservice.LoginResponse {
+	return s.makeLoginResponse(&userservice.Auth{Token: "", UserId: zero}, &userservice.User{UserId: zero, UserName: ""})
 }
