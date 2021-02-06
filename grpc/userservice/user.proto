@@ -97,6 +97,24 @@ message TokenAuthResponse {
   User user=1;
 }
 
+message FollowUserRequet {
+  uint32 follwer_user_id=1;
+  uint32 follwed_user_id=2;
+}
+
+message FollowUserResponse {
+  ResponseStatus status=1;
+}
+
+message UnFollowUserRequet {
+  uint32 follwer_user_id=1;
+  uint32 follwed_user_id=2;
+}
+
+message UnFollowUserResponse {
+  ResponseStatus status=1;
+}
+
 service UserService {
   rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
   rpc ReadUser(ReadUserRequest) returns (ReadUserResponse);
@@ -107,4 +125,6 @@ service UserService {
   rpc ListUser(ListUserRequest) returns (ListUserResponse);
   rpc Login(LoginRequest) returns (LoginResponse);
   rpc TokenAuth(TokenAuthRequest) returns (TokenAuthResponse);
+  rpc FollowUser(FollowUserRequet) returns (FollowUserResponse);
+  rpc UnFollowUser(UnFollowUserRequet) returns (UnFollowUserResponse);
 }

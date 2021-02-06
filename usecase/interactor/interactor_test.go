@@ -1,6 +1,7 @@
 package interactor
 
 import (
+	"log"
 	"testing"
 
 	"github.com/go-playground/assert/v2"
@@ -14,6 +15,9 @@ var (
 	testpassword    = "password"
 	demoProfileText = "プロフィールが入ります"
 	updatedName     = "updatedName"
+	user1           uint32
+	user2           uint32
+	user3           uint32
 )
 
 var DemoUser = model.User{
@@ -307,6 +311,55 @@ func TestLoginAuthPasswordInvalid(t *testing.T) {
 
 }
 
+func TestFollow(t *testing.T) {
+	var i UserInteractor
+	user1, user2, user3 := selectUsers()
+	assert.Equal(t, nil, err)
+
+	// postID := createdPost.Post.ID
+	relation := &model.Relation{FollowerUserID: user1, FollowedUserID: user2}
+
+	_, err = i.Follow(relation)
+	assert.Equal(t, nil, err)
+
+	// フォロー数をカウントするテスト
+	likeCount := countFollowUserByFollower(user1)
+	assert.Equal(t, 1, likeCount)
+
+	relation = &model.Relation{FollowerUserID: user1, FollowedUserID: user3}
+	_, err = i.Follow(relation)
+
+	// フォロー数が1増えている事をテスト
+	likeCount = countFollowUserByFollower(user1)
+	assert.Equal(t, 2, likeCount)
+}
+
+func TestUnFollow(t *testing.T) {
+	var i UserInteractor
+
+	// フォロワー・フォローユーザー関係
+	relations := []model.Relation{
+		{FollowerUserID: user2, FollowedUserID: user1},
+		{FollowerUserID: user2, FollowedUserID: user3},
+	}
+	// フォロー実行
+	for _, r := range relations {
+		_, err = i.Follow(&r)
+	}
+	assert.Equal(t, nil, err)
+
+	beforeFollowCount := countFollowUserByFollower(user2)
+
+	// 1件フォロー解除
+	_, err = i.UnFollow(&model.Relation{FollowerUserID: user2, FollowedUserID: user1})
+	assert.Equal(t, nil, err)
+
+	afterFollowCount := countFollowUserByFollower(user2)
+
+	// フォロー数が1だけ減っている事をテスト
+	assert.Equal(t, afterFollowCount, beforeFollowCount-1)
+}
+
 // TestLoginAuthPasswordNull パスワード空白でログインを行う異常系
 func TestLoginAuthPasswordNull(t *testing.T) {
 	var i UserInteractor
@@ -385,9 +438,31 @@ func TestDelete(t *testing.T) {
 	assert.Equal(t, "", findUser.Email)
 }
 
-// List
+func selectUsers() (uint32, uint32, uint32) {
+	var i UserInteractor
+	var num int = 1
+	users, _ := i.ListAllNormalUser()
+
+	for i := range users {
+		if num == 1 {
+			user1 = users[i].ID
+			log.Println("user1", user1)
+		}
+		if num == 2 {
+			user2 = users[i].ID
+			log.Println("user2", user2)
+		}
+		if num == 3 {
+			user3 = users[i].ID
+			log.Println("user3", user3)
+		}
+		num++
+	}
+	return user1, user2, user3
+}
 
 func initUserTable() {
 	DB := db.GetDB()
 	DB.Delete(&model.User{})
+	DB.Delete(&model.Relation{})
 }

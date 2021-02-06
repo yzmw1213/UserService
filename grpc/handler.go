@@ -22,6 +22,10 @@ const (
 	StatusEmailInputInvalid string = "EMAIL_INPUT_INVALID_ERROR"
 	// StatusUserNameCountError 無効な文字数Username入力時のエラーステータス
 	StatusUserNameCountError string = "USERNAME_NUM_ERROR"
+	// StatusCreateUserSuccess フォロー成功ステータス
+	StatusFollowSuccess string = "FOLLOW_SUCCESS"
+	// StatusCreateUserSuccess フォロー解除成功ステータス
+	StatusUnFollowSuccess string = "UNFOLLOW_SUCCESS"
 	// zero ユーザーIDのゼロ値
 	zero uint32 = 0
 )
@@ -210,6 +214,32 @@ func (s server) TokenAuth(ctx context.Context, req *userservice.TokenAuthRequest
 	return &userservice.TokenAuthResponse{
 		User: makeGrpcUser(&user),
 	}, nil
+}
+
+func (s server) FollowUser(ctx context.Context, req *userservice.FollowUserRequet) (*userservice.FollowUserResponse, error) {
+	relation := &model.Relation{
+		FollowerUserID: req.GetFollwerUserId(),
+		FollowedUserID: req.GetFollwedUserId(),
+	}
+
+	if _, err := s.Usecase.Follow(relation); err != nil {
+		return nil, err
+	}
+
+	return &userservice.FollowUserResponse{Status: &userservice.ResponseStatus{Code: StatusFollowSuccess}}, nil
+}
+
+func (s server) UnFollowUser(ctx context.Context, req *userservice.UnFollowUserRequet) (*userservice.UnFollowUserResponse, error) {
+	relation := &model.Relation{
+		FollowerUserID: req.GetFollwerUserId(),
+		FollowedUserID: req.GetFollwedUserId(),
+	}
+
+	if _, err := s.Usecase.UnFollow(relation); err != nil {
+		return nil, err
+	}
+
+	return &userservice.UnFollowUserResponse{Status: &userservice.ResponseStatus{Code: StatusUnFollowSuccess}}, nil
 }
 
 // makeCreateUserResponse CreateUserメソッドのresponseを生成し返す
