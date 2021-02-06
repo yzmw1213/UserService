@@ -339,7 +339,7 @@ func TestLoginByNotRegistered(t *testing.T) {
 	assert.NotEqual(t, nil, err)
 }
 
-// TestGuestLogin
+// TestGuestLogin ゲストログイン
 func TestGuestLogin(t *testing.T) {
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
@@ -352,6 +352,26 @@ func TestGuestLogin(t *testing.T) {
 	req := &userservice.GuestLoginRequest{}
 
 	res, err := client.GuestLogin(ctx, req)
+	assert.Equal(t, nil, err)
+	assert.NotEqual(t, "", res.GetAuth().GetToken())
+	assert.NotEqual(t, zero, res.GetAuth().GetUserId())
+	assert.NotEqual(t, "", res.GetUser().GetUserName())
+	assert.NotEqual(t, zero, res.GetUser().GetUserId())
+}
+
+// SuperUserLogin 管理ユーザーログイン
+func SuperUserLogin(t *testing.T) {
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+
+	client := userservice.NewUserServiceClient(conn)
+
+	req := &userservice.SuperUserLoginRequest{}
+
+	res, err := client.SuperUserLogin(ctx, req)
 	assert.Equal(t, nil, err)
 	assert.NotEqual(t, "", res.GetAuth().GetToken())
 	assert.NotEqual(t, zero, res.GetAuth().GetUserId())

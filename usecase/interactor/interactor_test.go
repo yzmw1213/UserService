@@ -371,6 +371,18 @@ func TestCreateDemoUser(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.Equal(t, "ゲストユーザー"+strconv.Itoa(int(auth.UserID)), user.UserName)
 	assert.Equal(t, strconv.Itoa(int(auth.UserID))+"demouser@example.com", user.Email)
+	assert.Equal(t, authorityNormalUser, user.Authority)
+}
+
+func TestCreateDemoSuperUser(t *testing.T) {
+	var i UserInteractor
+	auth, err := i.CreateDemoSuperUser()
+	assert.Equal(t, nil, err)
+	assert.NotEqual(t, zero, auth.UserID)
+
+	user, err := i.GetUserByUserID(auth.UserID)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, authoritySuperUser, user.Authority)
 }
 
 // TestLoginAuthPasswordNull パスワード空白でログインを行う異常系
