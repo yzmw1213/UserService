@@ -3,7 +3,6 @@ package grpc
 import (
 	"context"
 	"errors"
-	"log"
 
 	"github.com/yzmw1213/UserService/authorization"
 
@@ -22,9 +21,9 @@ const (
 	StatusEmailInputInvalid string = "EMAIL_INPUT_INVALID_ERROR"
 	// StatusUserNameCountError 無効な文字数Username入力時のエラーステータス
 	StatusUserNameCountError string = "USERNAME_NUM_ERROR"
-	// StatusCreateUserSuccess フォロー成功ステータス
+	// StatusFollowSuccess フォロー成功ステータス
 	StatusFollowSuccess string = "FOLLOW_SUCCESS"
-	// StatusCreateUserSuccess フォロー解除成功ステータス
+	// StatusUnFollowSuccess フォロー解除成功ステータス
 	StatusUnFollowSuccess string = "UNFOLLOW_SUCCESS"
 	// zero ユーザーIDのゼロ値
 	zero uint32 = 0
@@ -69,7 +68,7 @@ func (s server) ListUser(ctx context.Context, req *userservice.ListUserRequest) 
 	}
 	var profiles []*userservice.UserProfile
 	for _, user := range rows {
-		user := makeGrpcUserProfile(&user)
+		user := makeGrpcUserProfile(&user, []uint32{})
 		profiles = append(profiles, user)
 	}
 	res := &userservice.ListUserResponse{
@@ -81,17 +80,15 @@ func (s server) ListUser(ctx context.Context, req *userservice.ListUserRequest) 
 
 func (s server) ReadUser(ctx context.Context, req *userservice.ReadUserRequest) (*userservice.ReadUserResponse, error) {
 	userID := req.GetUserId()
-	// userName := req.GetUserName()
 	row, err := s.Usecase.GetUserByUserID(userID)
+	followUsers := s.Usecase.GetFollowUsersByID(userID)
+
 	if err != nil {
 		return nil, err
 	}
-	user := &userservice.User{
-		UserId:   row.ID,
-		UserName: row.UserName,
-	}
+	user := makeGrpcUserProfile(&row, followUsers)
 	res := &userservice.ReadUserResponse{
-		User: user,
+		Profile: user,
 	}
 	return res, nil
 }
@@ -146,12 +143,13 @@ func makeGrpcUser(user *model.User) *userservice.User {
 	return gUser
 }
 
-func makeGrpcUserProfile(user *model.User) *userservice.UserProfile {
+func makeGrpcUserProfile(user *model.User, followUsers []uint32) *userservice.UserProfile {
 	gUser := &userservice.UserProfile{
 		UserId:      user.ID,
 		UserName:    user.UserName,
 		ProfileText: user.ProfileText,
 		Authority:   user.Authority,
+		FollowUsers: followUsers,
 	}
 	return gUser
 }
@@ -168,8 +166,6 @@ func makeGrpcAuth(auth *model.Auth) *userservice.Auth {
 // ログイン
 // Email, Passwordの組み合わせで認証を行う
 func (s server) Login(ctx context.Context, req *userservice.LoginRequest) (*userservice.LoginResponse, error) {
-	log.Println(req.Email)
-	log.Println(req.Password)
 	if s.userExistsByEmail(req.GetEmail()) != true {
 		return s.makeLoginResponse(&userservice.Auth{Token: "", UserId: zero}, &userservice.User{UserId: zero, UserName: ""}), errors.New("user not found")
 	}

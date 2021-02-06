@@ -204,18 +204,6 @@ func (i *UserInteractor) Update(postData *model.User) (*model.User, error) {
 	return updateUser, nil
 }
 
-// Read IDを元にユーザを1件取得する
-func (i *UserInteractor) Read(ID uint32) (model.User, error) {
-	DB := db.GetDB()
-	row := DB.First(&user, ID)
-	if err := row.Error; err != nil {
-		return model.User{}, err
-	}
-	DB.Table(db.UserTableName).Scan(row)
-	user.ProfileText = "よろしくお願いしますよろしくお願いしますよろしくお願いします"
-	return user, nil
-}
-
 // GetUserByUserID UserIDを元にユーザを1件取得する
 func (i *UserInteractor) GetUserByUserID(id uint32) (model.User, error) {
 	var user model.User
@@ -227,7 +215,6 @@ func (i *UserInteractor) GetUserByUserID(id uint32) (model.User, error) {
 	}
 	DB.Table(db.UserTableName).Scan(row)
 
-	user.ProfileText = "よろしくお願いしますよろしくお願いしますよろしくお願いします"
 	return user, nil
 }
 
@@ -317,6 +304,24 @@ func (i *UserInteractor) UnFollow(postData *model.Relation) (*model.Relation, er
 		return postData, err
 	}
 	return postData, nil
+}
+
+// GetFollowUsersByID フォロワーユーザーIDを一覧で取得
+func (i *UserInteractor) GetFollowUsersByID(userID uint32) []uint32 {
+
+	var followers []uint32
+	DB := db.GetDB()
+	rows, err := DB.Where("followed_user_id = ?", userID).Find(&relations).Rows()
+	if err != nil {
+		log.Println("Error occured on GetFollowUsersByID", userID)
+		return nil
+	}
+	for rows.Next() {
+		DB.ScanRows(rows, &relation)
+		followers = append(followers, relation.FollowerUserID)
+	}
+
+	return followers
 }
 
 // countFollowUserByFollower フォロワーユーザーIDを元にフォローされている数を取得する

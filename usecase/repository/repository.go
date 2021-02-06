@@ -14,4 +14,5 @@ type UserRepository interface {
 	List() ([]model.User, error)
 	ListAllNormalUser() ([]model.User, error)
 	Update(*model.User) (*model.User, error)
+	GetFollowUsersByID(id uint32) []uint32
 }
