@@ -42,8 +42,6 @@ const (
 const (
 	// authorityNormalUser 一般ユーザー
 	authorityNormalUser uint32 = 1
-	// authorityCompanyUser 企業ユーザー
-	authorityCompanyUser uint32 = 2
 	// authoritySuperUser 管理者ユーザー
 	authoritySuperUser uint32 = 9
 )
@@ -131,26 +129,11 @@ func (i *UserInteractor) List() ([]model.User, error) {
 	return userList, nil
 }
 
-// ListAllCompany 企業ユーザーリストを返却
-func (i *UserInteractor) ListAllCompany() ([]model.User, error) {
-	DB := db.GetDB()
-	var users []model.User
-	err := DB.Where("authority = ?", authorityCompanyUser).Select("users.id, users.user_name, users.profile_text, users.authority").Find(&users).Error
-	log.Println("users", users)
-	if err != nil {
-		fmt.Println("Error happened")
-		return []model.User{}, err
-	}
-
-	return users, nil
-}
-
 // ListAllNormalUser 一般ユーザーリストを返却
 func (i *UserInteractor) ListAllNormalUser() ([]model.User, error) {
 	DB := db.GetDB()
 	var users []model.User
 	err := DB.Where("authority = ?", authorityNormalUser).Select("users.id, users.user_name, users.profile_text, users.authority").Find(&users).Error
-	log.Println("users", users)
 	if err != nil {
 		fmt.Println("Error happened")
 		return []model.User{}, err

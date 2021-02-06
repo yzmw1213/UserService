@@ -270,7 +270,7 @@ func TestRead(t *testing.T) {
 	findUser, err := i.GetUserByEmail(DemoUser.Email)
 	assert.Equal(t, nil, err)
 
-	user, err := i.Read(findUser.ID)
+	user, err := i.GetUserByUserID(findUser.ID)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, updatedName, user.UserName)
 	assert.Equal(t, DemoUser.Email, user.Email)
@@ -281,7 +281,7 @@ func TestReadByIDNotExists(t *testing.T) {
 	var i UserInteractor
 	var searchID uint32 = 10000
 
-	_, err := i.Read(searchID)
+	_, err := i.GetUserByUserID(searchID)
 	assert.NotEqual(t, nil, err)
 
 }

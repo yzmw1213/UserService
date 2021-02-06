@@ -19,7 +19,6 @@ import (
 const (
 	bufSize        = 1024 * 1024
 	one     uint32 = 1
-	two     uint32 = 2
 	nine    uint32 = 9
 )
 

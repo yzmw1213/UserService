@@ -62,24 +62,6 @@ func (s server) DeleteUser(ctx context.Context, req *userservice.DeleteUserReque
 	return res, nil
 }
 
-func (s server) ListCompany(ctx context.Context, req *userservice.ListCompanyRequest) (*userservice.ListCompanyResponse, error) {
-	log.Println("ListCompany")
-	rows, err := s.Usecase.ListAllCompany()
-	if err != nil {
-		return nil, err
-	}
-	var companys []*userservice.UserProfile
-	for _, user := range rows {
-		user := makeGrpcUserProfile(&user)
-		companys = append(companys, user)
-	}
-	res := &userservice.ListCompanyResponse{
-		Profile: companys,
-	}
-
-	return res, nil
-}
-
 func (s server) ListUser(ctx context.Context, req *userservice.ListUserRequest) (*userservice.ListUserResponse, error) {
 	rows, err := s.Usecase.ListAllNormalUser()
 	if err != nil {
@@ -100,7 +82,7 @@ func (s server) ListUser(ctx context.Context, req *userservice.ListUserRequest) 
 func (s server) ReadUser(ctx context.Context, req *userservice.ReadUserRequest) (*userservice.ReadUserResponse, error) {
 	userID := req.GetUserId()
 	// userName := req.GetUserName()
-	row, err := s.Usecase.Read(userID)
+	row, err := s.Usecase.GetUserByUserID(userID)
 	if err != nil {
 		return nil, err
 	}

@@ -65,13 +65,6 @@ message DeleteUserResponse {
   ResponseStatus status=1;
 }
 
-message ListCompanyRequest {
-}
-
-message ListCompanyResponse {
-  repeated UserProfile profile=1;
-}
-
 message ListUserRequest {
 }
 
@@ -120,8 +113,6 @@ service UserService {
   rpc ReadUser(ReadUserRequest) returns (ReadUserResponse);
   rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
   rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
-  // ListCompany 廃止予定
-  rpc ListCompany(ListCompanyRequest) returns (ListCompanyResponse);
   rpc ListUser(ListUserRequest) returns (ListUserResponse);
   rpc Login(LoginRequest) returns (LoginResponse);
   rpc TokenAuth(TokenAuthRequest) returns (TokenAuthResponse);
