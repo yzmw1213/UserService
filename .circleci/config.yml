@@ -36,9 +36,9 @@ workflows:
           # テストをパスしたら実行
           requires:
             - test
-          filters:
-            branches:
-              only: master
+          # filters:
+          #   branches:
+          #     only: master
           region: AWS_REGION
           account-url: AWS_ECR_ACCOUNT_URL
           repo: ${ECR_REPOSITORY_NAME}
@@ -47,14 +47,14 @@ workflows:
           # イメージのビルド & プッシュが成功したら実行
           requires:
             - aws-ecr/build-and-push-image
-          filters:
-            branches:
-              only: master
+          # filters:
+          #   branches:
+          #     only: master
           aws-region: AWS_REGION
-          family: ECS_TASK
-          cluster-name: ECS_CLUSTER
-          service-name: ECS_SERVICE
-          container-image-name-updates: 'container=${ECS_SERVICE},tag=${CIRCLE_SHA1},image-and-tag=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${ECR_REPOSITORY_NAME}:${CIRCLE_SHA1}'
+          family: ${ECS_SERVICE}
+          cluster-name: "app-cluster"
+          # service-name: ECS_SERVICE
+          container-image-name-updates: 'container=${ECS_SERVICE},tag=${CIRCLE_SHA1},image-and-tag=${AWS_ECR_ACCOUNT_URL}/${ECR_REPOSITORY_NAME}:${CIRCLE_SHA1}'
       # - aws-ecs/run-task:
       #     requires:
       #       - aws-ecs/deploy-service-update
