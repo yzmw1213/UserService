@@ -53,7 +53,7 @@ workflows:
           aws-region: ${AWS_REGION}
           family: ${ECS_SERVICE}
           cluster-name: "app-cluster"
-          # task-definition: "td-userservice"
+          task-definition: "td-userservice"
           container-image-name-updates: 'container=${ECS_SERVICE},tag=${CIRCLE_SHA1}'
       # - aws-ecs/run-task:
       #     requires:
