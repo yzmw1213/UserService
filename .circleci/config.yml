@@ -50,7 +50,7 @@ workflows:
           # filters:
           #   branches:
           #     only: master
-          aws-region: AWS_REGION
+          aws-region: ${AWS_REGION}
           family: ${ECS_SERVICE}
           cluster-name: "app-cluster"
           # service-name: ECS_SERVICE
