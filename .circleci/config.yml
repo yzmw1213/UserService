@@ -53,12 +53,15 @@ workflows:
           aws-region: ${AWS_REGION}
           family: ${ECS_SERVICE}
           cluster-name: "app-cluster"
-          # service-name: ECS_SERVICE
+          task-definition: "td-userservice"
           container-image-name-updates: 'container=${ECS_SERVICE},tag=${CIRCLE_SHA1},image-and-tag=${AWS_ECR_ACCOUNT_URL}/${ECR_REPOSITORY_NAME}:${CIRCLE_SHA1}'
       # - aws-ecs/run-task:
       #     requires:
       #       - aws-ecs/deploy-service-update
-      #     aws-region: ${AWS_DEFAULT_REGION}
+      #     aws-region: ${AWS_REGION}
       #     cluster: '${ECS_CLUSTER}'
-      #     task-definition: '${ECS_TASK}'
-      #     launch-type: EC2
+      #     task-definition: "td-userservice"
+      #     count: 1
+      #     launch-type: FARGATE
+      #     awsvpc: true
+      #     subnet-ids: 
