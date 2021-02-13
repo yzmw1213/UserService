@@ -42,7 +42,7 @@ workflows:
           region: AWS_REGION
           account-url: AWS_ECR_ACCOUNT_URL
           repo: ${ECR_REPOSITORY_NAME}
-          tag: "$CIRCLE_SHA1"
+          tag: "${CIRCLE_SHA1}"
       - aws-ecs/deploy-service-update:
           # イメージのビルド & プッシュが成功したら実行
           requires:
@@ -53,8 +53,8 @@ workflows:
           aws-region: ${AWS_REGION}
           family: ${ECS_SERVICE}
           cluster-name: "app-cluster"
-          task-definition: "td-userservice"
-          container-image-name-updates: 'container=${ECS_SERVICE},tag=${CIRCLE_SHA1},image-and-tag=${AWS_ECR_ACCOUNT_URL}/${ECR_REPOSITORY_NAME}:${CIRCLE_SHA1}'
+          # task-definition: "td-userservice"
+          container-image-name-updates: 'container=${ECS_SERVICE},tag=${CIRCLE_SHA1}'
       # - aws-ecs/run-task:
       #     requires:
       #       - aws-ecs/deploy-service-update
