@@ -1,4 +1,4 @@
-"# UserService
+# UserService
 Goで構築するマイクロサービスのユーザサービス
 
 # 概要
@@ -16,10 +16,6 @@ Goで構築するマイクロサービスのユーザサービス
 
 ## 構成図
 ![AWS_stracture](https://user-images.githubusercontent.com/36359899/89097162-79bd3200-d417-11ea-83e5-8c998c824a0f.png)
-
-
-## 構成図
-![PortfolioArchitecture](https://user-images.githubusercontent.com/36359899/108287470-2ef5e280-71ce-11eb-9301-a2c3c8ed5d01.png)
 
 ## 機能一覧
 - ユーザー
