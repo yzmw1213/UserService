@@ -8,8 +8,10 @@ var validate *validator.Validate
 
 // User ユーザサービス構造体
 type User struct {
-	UserID   int32  `gorm:"primary_key"`
-	Password string `validate:"min=6,max=32"`
-	UserName string `validate:"min=6,max=16"`
-	Email    string `validate:"email"`
+	ID          uint32 `gorm:"primary_key"`
+	Password    string `validate:"min=6,max=32"`
+	UserName    string `validate:"min=6,max=16"`
+	Email       string `validate:"email"`
+	Authority   uint32 `validate:"oneof=0 1 9"`
+	ProfileText string `validate:"max=240"`
 }

@@ -1,6 +1,6 @@
 #!/bin/sh
 DIR=$(cd "$(dirname "$0")" || exit 1 ; pwd);
-OUT_DIR="/grpc/user_grpc";
+OUT_DIR="/grpc/userservice";
 PROTO_FILE="user.proto";
 
 protoc \

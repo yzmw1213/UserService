@@ -3,11 +3,12 @@ package interactor
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
+	"strconv"
 
-	"github.com/dgrijalva/jwt-go"
-	"github.com/pkg/errors"
+	"github.com/yzmw1213/UserService/authorization"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/yzmw1213/UserService/db"
@@ -16,16 +17,38 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type key int
+
 var (
-	err      error
-	user     model.User
-	users    []model.User
-	rows     *sql.Rows
-	validate *validator.Validate
+	err       error
+	user      model.User
+	relation  model.Relation
+	users     []model.User
+	relations []model.Relation
+	rows      *sql.Rows
+	validate  *validator.Validate
 )
 
-// secretを環境変数から読む
-const secret = "2FMd5FNSqS/nW2wWJy5S3ppjSHhUnLt8HuwBkTD6HqfPfBBDlykwLA=="
+const (
+	// secretを環境変数から読む
+	secret = "2FMd5FNSqS/nW2wWJy5S3ppjSHhUnLt8HuwBkTD6HqfPfBBDlykwLA=="
+	// キータイプ
+	stringKey key = iota
+	// ゼロ値
+	zero uint32 = 0
+	// one 1
+	one uint32 = 1
+)
+
+const (
+	// authorityNormalUser 一般ユーザー
+	authorityNormalUser uint32 = 1
+	// authoritySuperUser 管理者ユーザー
+	authoritySuperUser uint32 = 9
+)
+
+var demoUser = model.User{UserName: "", Email: "", Password: "password", Authority: authorityNormalUser}
+var demoSuperUser = model.User{UserName: "", Email: "", Password: "password", Authority: authoritySuperUser}
 
 // UserInteractor ユーザサービスを提供するメソッド群
 type UserInteractor struct{}
@@ -35,8 +58,13 @@ var _ repository.UserRepository = (*UserInteractor)(nil)
 // Create ユーザ1件を作成
 func (i *UserInteractor) Create(postData *model.User) (*model.User, error) {
 	validate = validator.New()
-	DB := db.GetDB()
+	// DB := db.GetDB()
 	createUser := postData
+
+	u, _ := i.GetUserByEmail(createUser.Email)
+	if u.ID != 0 {
+		return postData, errors.New("email already used")
+	}
 
 	// User構造体のバリデーション
 	if err := validate.Struct(postData); err != nil {
@@ -51,19 +79,32 @@ func (i *UserInteractor) Create(postData *model.User) (*model.User, error) {
 		return createUser, err
 	}
 
-	if err := DB.Create(createUser).Error; err != nil {
+	// トランザクション開始
+	tx := db.StartBegin()
+
+	if err := tx.Create(createUser).Error; err != nil {
+		db.EndRollback()
 		return postData, err
 	}
 
+	// トランザクションを終了しコミット
+	db.EndCommit()
 	return postData, nil
 }
 
-// Delete ユーザ1件を削除
-func (i *UserInteractor) Delete(postData *model.User) error {
-	DB := db.GetDB()
-	if err := DB.Delete(postData).Error; err != nil {
+// DeleteByID 指定したIDのユーザー1件を削除
+func (i *UserInteractor) DeleteByID(id uint32) error {
+	var user model.User
+
+	// トランザクション開始
+	tx := db.StartBegin()
+
+	if err := tx.Where("id = ? ", id).Delete(&user).Error; err != nil {
+		db.EndRollback()
 		return err
 	}
+	// トランザクションを終了しコミット
+	db.EndCommit()
 	return nil
 }
 
@@ -92,6 +133,19 @@ func (i *UserInteractor) List() ([]model.User, error) {
 	return userList, nil
 }
 
+// ListAllNormalUser 一般ユーザーリストを返却
+func (i *UserInteractor) ListAllNormalUser() ([]model.User, error) {
+	DB := db.GetDB()
+	var users []model.User
+	err := DB.Where("authority = ?", authorityNormalUser).Select("users.id, users.user_name, users.profile_text, users.authority").Find(&users).Error
+	if err != nil {
+		fmt.Println("Error happened")
+		return []model.User{}, err
+	}
+
+	return users, nil
+}
+
 // listAll 全件取得
 func listAll(ctx context.Context) ([]model.User, error) {
 	DB := db.GetDB()
@@ -112,7 +166,7 @@ func listAll(ctx context.Context) ([]model.User, error) {
 func (i *UserInteractor) Update(postData *model.User) (*model.User, error) {
 	DB := db.GetDB()
 	// postされたIdに紐づくuserを取得
-	id := postData.UserID
+	id := postData.ID
 	findUser := &model.User{}
 
 	// User構造体のバリデーション
@@ -120,12 +174,17 @@ func (i *UserInteractor) Update(postData *model.User) (*model.User, error) {
 		return postData, err
 	}
 
-	if err := DB.Where("user_id = ?", id).First(&findUser).Error; err != nil {
+	if err := DB.Where("id = ?", id).First(&findUser).Error; err != nil {
 		log.Fatalf("err: %v", err)
 		return findUser, err
 	}
 
 	updateUser := postData
+
+	// 更新時に入力されたemailが他のユーザーと重複していないか判定
+	if i.OtherUserExistsByEmail(updateUser.Email, updateUser.ID) == true {
+		return postData, errors.New("email already used")
+	}
 	// パスワードをhash
 	hash, err := createHashPassword(postData.Password)
 	// hashしたパスワードをSaveするuserにセット
@@ -135,23 +194,31 @@ func (i *UserInteractor) Update(postData *model.User) (*model.User, error) {
 		return updateUser, err
 	}
 
-	updateUser.UserID = findUser.UserID
+	updateUser.ID = findUser.ID
 
-	if err := DB.Save(updateUser).Error; err != nil {
+	// トランザクション開始
+	tx := db.StartBegin()
+
+	if err := tx.Save(updateUser).Error; err != nil {
+		db.EndRollback()
 		return updateUser, err
 	}
-
+	// トランザクションを終了しコミット
+	db.EndCommit()
 	return updateUser, nil
 }
 
-// Read IDを元にユーザを1件取得する
-func (i *UserInteractor) Read(userID int32) (model.User, error) {
+// GetUserByUserID UserIDを元にユーザを1件取得する
+func (i *UserInteractor) GetUserByUserID(id uint32) (model.User, error) {
+	var user model.User
+
 	DB := db.GetDB()
-	row := DB.First(&user, userID)
+	row := DB.Where("id = ?", id).First(&user)
 	if err := row.Error; err != nil {
-		return model.User{}, err
+		return user, err
 	}
-	DB.Table(db.TableName).Scan(row)
+	DB.Table(db.UserTableName).Scan(row)
+
 	return user, nil
 }
 
@@ -164,9 +231,19 @@ func (i *UserInteractor) GetUserByEmail(email string) (model.User, error) {
 	if err := row.Error; err != nil {
 		return user, err
 	}
-	DB.Table(db.TableName).Scan(row)
+	DB.Table(db.UserTableName).Scan(row)
 
 	return user, nil
+}
+
+// OtherUserExistsByEmail 指定したユーザ以外にemailが重複するユーザが存在するか判定
+func (i *UserInteractor) OtherUserExistsByEmail(email string, id uint32) bool {
+	var user model.User
+	var count int
+
+	DB := db.GetDB()
+	DB.Not("id = ?", id).Where("email = ?", email).Find(&user).Count(&count)
+	return count > 0
 }
 
 func createHashPassword(password string) (string, error) {
@@ -199,85 +276,124 @@ func (i *UserInteractor) LoginAuth(email string, inputPassword string) (*model.A
 
 	// contextにユーザ情報格納
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, "email", findUser.Email)
+	ctx = context.WithValue(ctx, stringKey, findUser.ID)
 
 	// authのAuthFuncを呼び出す
 	// jwt生成
-	token, err := createToken(&findUser)
+	token, err := authorization.CreateToken(&findUser)
 	if err != nil {
 		return &model.Auth{}, err
 	}
 
 	return &model.Auth{
-		Token: token,
-		Email: email,
+		UserID:    findUser.ID,
+		Authority: findUser.Authority,
+		Token:     token,
 	}, nil
 }
 
-// TokenAuth 認証トークンで認証を行い、ユーザ情報を返す
-func (i *UserInteractor) TokenAuth(token string) (model.User, error) {
-	// tokenからemailを取り出す
-	email, err := parseToken(token)
+// CreateDemoUser ゲストログインユーザーを作成し、トークンを返す
+func (i *UserInteractor) CreateDemoUser() (*model.Auth, error) {
+	// ユーザーIDの最大値を取得
+	maxID := getMaxUserID()
+	maxID++
+
+	// maxIDをdemoユーザーのEmailに格納
+	uniqueDemoUser := demoUser
+
+	uniqueDemoUser.UserName = "ゲストユーザー" + strconv.Itoa(maxID)
+	uniqueDemoUser.Email = strconv.Itoa(maxID) + "demouser@example.com"
+	// Create実行
+	_, err := i.Create(&uniqueDemoUser)
+
 	if err != nil {
-		return model.User{}, err
+		return &model.Auth{}, err
 	}
-	// emailでユーザ検索
-	user, err := i.GetUserByEmail(email)
+	// LoginAuth実行
+	auth, err := i.LoginAuth(uniqueDemoUser.Email, "password")
 	if err != nil {
-		return user, err
+		return &model.Auth{}, err
 	}
-	//
-	return user, nil
+	// 認証情報を返す
+	return auth, nil
 }
 
-// parseToken は jwt トークンから元になった認証情報を取り出す。
-func parseToken(signedString string) (string, error) {
-	token, err := jwt.Parse(signedString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return "", fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return []byte(secret), nil
-	})
-	log.Println(signedString)
+// CreateDemoSuperUser 管理者ユーザーを作成し、トークンを返す
+func (i *UserInteractor) CreateDemoSuperUser() (*model.Auth, error) {
+	// ユーザーIDの最大値を取得
+	maxID := getMaxUserID()
+	maxID++
+
+	// maxIDをdemoユーザーのEmailに格納
+	uniqueDemoSuperUser := demoSuperUser
+
+	uniqueDemoSuperUser.UserName = "管理者ユーザー" + strconv.Itoa(maxID)
+	uniqueDemoSuperUser.Email = strconv.Itoa(maxID) + "superuser@example.com"
+	// Create実行
+	_, err := i.Create(&uniqueDemoSuperUser)
 
 	if err != nil {
-		if ve, ok := err.(*jwt.ValidationError); ok {
-			if ve.Errors&jwt.ValidationErrorExpired != 0 {
-				return "", errors.Wrapf(err, "%s is expired", signedString)
-
-			}
-
-			return "", errors.Wrapf(err, "%s is invalid", signedString)
-		}
-
-		return "", errors.Wrapf(err, "%s is invalid", signedString)
+		return &model.Auth{}, err
 	}
-
-	if token == nil {
-
-		return "", fmt.Errorf("not found token in %s", signedString)
+	// LoginAuth実行
+	auth, err := i.LoginAuth(uniqueDemoSuperUser.Email, "password")
+	if err != nil {
+		return &model.Auth{}, err
 	}
-
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		return "", fmt.Errorf("not found claims in %s", signedString)
-	}
-	email := claims["email"].(string)
-
-	return email, nil
+	// 認証情報を返す
+	return auth, nil
 }
 
-func createToken(user *model.User) (string, error) {
+func getMaxUserID() int {
+	var result int
+	DB := db.GetDB()
+	row := DB.Table(db.UserTableName).Select("max(id)").Row()
 
-	claims := &jwt.MapClaims{
-		"email": user.Email,
+	row.Scan(&result)
+	return result
+}
+
+// Follow ユーザーをフォロー
+func (i *UserInteractor) Follow(postData *model.Relation) (*model.Relation, error) {
+	DB := db.GetDB()
+	if err := DB.Create(postData).Error; err != nil {
+		return postData, err
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return postData, nil
+}
 
-	tokenString, err := token.SignedString([]byte(secret))
+// UnFollow フォロー解除
+func (i *UserInteractor) UnFollow(postData *model.Relation) (*model.Relation, error) {
+	DB := db.GetDB()
+	if err := DB.Where("follower_user_id = ?", postData.FollowerUserID).Where("followed_user_id = ?", postData.FollowedUserID).Delete(postData).Error; err != nil {
+		return postData, err
+	}
+	return postData, nil
+}
 
+// GetFollowUsersByID フォロワーユーザーIDを一覧で取得
+func (i *UserInteractor) GetFollowUsersByID(userID uint32) []uint32 {
+
+	var followers []uint32
+	DB := db.GetDB()
+	rows, err := DB.Where("followed_user_id = ?", userID).Find(&relations).Rows()
 	if err != nil {
-		return tokenString, err
+		log.Println("Error occured on GetFollowUsersByID", userID)
+		return nil
 	}
-	return tokenString, nil
+	for rows.Next() {
+		DB.ScanRows(rows, &relation)
+		followers = append(followers, relation.FollowerUserID)
+	}
+
+	return followers
+}
+
+// countFollowUserByFollower フォロワーユーザーIDを元にフォローされている数を取得する
+func countFollowUserByFollower(ID uint32) int {
+	var count int
+	DB := db.GetDB()
+	DB.Where("follower_user_id = ?", ID).Model(&relation).Count(&count)
+
+	return count
 }

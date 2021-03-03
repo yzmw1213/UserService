@@ -2,240 +2,110 @@ package grpc
 
 import (
 	"context"
-	"fmt"
-	"log"
-	"net"
-	"os"
-	"os/signal"
+	"errors"
 
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
-	"google.golang.org/grpc/metadata"
-
-	"github.com/go-playground/validator/v10"
-	// grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	// grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	"github.com/yzmw1213/UserService/authorization"
 
 	"github.com/yzmw1213/UserService/domain/model"
-	"github.com/yzmw1213/UserService/grpc/user_grpc"
-	"github.com/yzmw1213/UserService/usecase/interactor"
-
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
+	"github.com/yzmw1213/UserService/grpc/userservice"
 )
 
 const (
 	// StatusCreateUserSuccess ユーザ作成成功ステータス
 	StatusCreateUserSuccess string = "USER_CREATE_SUCCESS"
+	// StatusUpdateUserSuccess ユーザ更新成功ステータス
+	StatusUpdateUserSuccess string = "USER_UPDATE_SUCCESS"
 	// StatusEmailAlreadyUsed 既に使われているEmail登録時のエラーステータス
 	StatusEmailAlreadyUsed string = "EMAIL_ALREADY_USED_ERROR"
 	// StatusEmailInputInvalid 無効なEmail入力時のエラーステータス
 	StatusEmailInputInvalid string = "EMAIL_INPUT_INVALID_ERROR"
-	// StatusUsernameNumError 無効な文字数Username入力時のエラーステータス
-	StatusUsernameNumError string = "USERNAME_NUM_ERROR"
+	// StatusUserNameCountError 無効な文字数Username入力時のエラーステータス
+	StatusUserNameCountError string = "USERNAME_NUM_ERROR"
+	// StatusFollowSuccess フォロー成功ステータス
+	StatusFollowSuccess string = "FOLLOW_SUCCESS"
+	// StatusUnFollowSuccess フォロー解除成功ステータス
+	StatusUnFollowSuccess string = "UNFOLLOW_SUCCESS"
+	// zero ユーザーIDのゼロ値
+	zero uint32 = 0
 )
 
-type server struct {
-	Usecase interactor.UserInteractor
-}
-
-// ErrorCode エラーコード
-var ErrorCode string
-
-// NewUserGrpcServer gRPCサーバー起動
-func NewUserGrpcServer() {
-	lis, err := net.Listen("tcp", "0.0.0.0:50052")
-	if err != nil {
-		log.Fatalf("Failed to listen: %v", err)
-	}
-
-	userServer := &server{}
-
-	// s := grpc.NewServer(
-	// 	grpc.UnaryInterceptor(
-	// 		grpc_middleware.ChainUnaryServer(
-	// 			grpc_auth.UnaryServerInterceptor(authorization.AuthFunc),
-	// 		)),
-	// )
-
-	opts := []grpc.ServerOption{}
-	s := grpc.NewServer(opts...)
-
-	user_grpc.RegisterUserServiceServer(s, userServer)
-
-	// Register reflection service on gRPC server.
-	reflection.Register(s)
-	log.Println("main grpc server has started")
-
-	go func() {
-		if err := s.Serve(lis); err != nil {
-			log.Fatalf("failed to serve: %v", err)
-		}
-	}()
-
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, os.Interrupt)
-
-	// Block until a sgnal is received
-	<-ch
-	fmt.Println("Stopping the server")
-	s.Stop()
-	fmt.Println("Closing the client")
-	lis.Close()
-	fmt.Println("End of Program")
-
-}
-
-// https://github.com/grpc/grpc-go/issues/106
-func streamInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-	if err := authorize(stream.Context()); err != nil {
-		return err
-	}
-
-	return handler(srv, stream)
-}
-
-func unaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-	if err := authorize(ctx); err != nil {
-		return nil, err
-	}
-
-	return handler(ctx, req)
-}
-
-func authorize(ctx context.Context) error {
-	// ここでLoginAuthを呼び出す?
-	if md, ok := metadata.FromIncomingContext(ctx); ok {
-		// if len(md["username"]) > 0 && md["username"][0] == "admin" &&
-		// 	len(md["password"]) > 0 && md["password"][0] == "admin123" {
-		// 	return nil
-		// }
-		s := server{}
-		_, err := s.Usecase.LoginAuth(md["email"][0], md["password"][0])
-		if err != nil {
-			return err
-		}
-
-		// Authをcontextに格納?
-	}
-	st := status.New(codes.Unauthenticated, "not authenticated")
-
-	dt, err := st.WithDetails(
-		&errdetails.LocalizedMessage{
-			Locale:  "ja-JP",
-			Message: "認証に失敗しました",
-		},
-		&errdetails.LocalizedMessage{
-			Locale:  "en-US",
-			Message: "Unauthenticaticated",
-		},
-	)
-	if err != nil {
-		return err
-	}
-	return dt.Err()
-	// return EmptyMetadataErr
-	// return fmt.Errorf("authorize Error has happen: Email: %v", mail)
-}
-
-func (s server) CreateUser(ctx context.Context, req *user_grpc.CreateUserRequest) (*user_grpc.CreateUserResponse, error) {
-	postData := req.GetUser()
-	ErrorCode = ""
-
-	user := makeModel(postData)
+func (s server) CreateUser(ctx context.Context, req *userservice.CreateUserRequest) (*userservice.CreateUserResponse, error) {
+	user := makeModel(req.GetUser())
 
 	// 既に同一のemailによる登録がないかチェック
 	if s.userExistsByEmail(user.Email) == true {
-		return s.makeCreateResponse(nil, StatusEmailAlreadyUsed), nil
+		return s.makeCreateUserResponse(StatusEmailAlreadyUsed), nil
 	}
 
-	if _, err := s.Usecase.Create(user); err != nil {
+	// clientのリクエストに使うため、token作成をhandlerに出す?
+	user, err := s.Usecase.Create(user)
 
-		for _, err := range err.(validator.ValidationErrors) {
-			ErrorCode = makeValidationStatus(err)
-			if ErrorCode != "" {
-				break
-			}
-		}
-
-		return s.makeCreateResponse(nil, ErrorCode), nil
+	if err != nil {
+		return nil, err
 	}
+	// ユーザー作成に成功したら、clientより他のサービスのメソッドにリクエストを送る、など
+
 	// No errors
-	return s.makeCreateResponse(postData, StatusCreateUserSuccess), nil
+	return s.makeCreateUserResponse(StatusCreateUserSuccess), nil
 }
 
-func (s server) DeleteUser(ctx context.Context, req *user_grpc.DeleteUserRequest) (*user_grpc.DeleteUserResponse, error) {
+func (s server) DeleteUser(ctx context.Context, req *userservice.DeleteUserRequest) (*userservice.DeleteUserResponse, error) {
 	postData := req.GetUserId()
 	user := &model.User{
-		UserID: postData,
+		ID: postData,
 	}
-	if err := s.Usecase.Delete(user); err != nil {
+	if err := s.Usecase.DeleteByID(user.ID); err != nil {
 		return nil, err
 	}
-	res := &user_grpc.DeleteUserResponse{}
+	res := &userservice.DeleteUserResponse{}
 	return res, nil
 }
 
-func (s server) ListUser(req *user_grpc.ListUserRequest, stream user_grpc.UserService_ListUserServer) error {
-	rows, err := s.Usecase.List()
+func (s server) ListUser(ctx context.Context, req *userservice.ListUserRequest) (*userservice.ListUserResponse, error) {
+	rows, err := s.Usecase.ListAllNormalUser()
 	if err != nil {
-		return err
+		return nil, err
 	}
+	var profiles []*userservice.UserProfile
 	for _, user := range rows {
-		user := &user_grpc.User{
-			UserId:   user.UserID,
-			UserName: user.UserName,
-			Email:    user.Email,
-		}
-		res := &user_grpc.ListUserResponse{
-			User: user,
-		}
-		sendErr := stream.Send(res)
-		if sendErr != nil {
-			log.Fatalf("Error while sending response to client :%v", sendErr)
-			return sendErr
-		}
+		user := makeGrpcUserProfile(&user, []uint32{})
+		profiles = append(profiles, user)
+	}
+	res := &userservice.ListUserResponse{
+		Profile: profiles,
 	}
 
-	return nil
+	return res, nil
 }
 
-func (s server) ReadUser(ctx context.Context, req *user_grpc.ReadUserRequest) (*user_grpc.ReadUserResponse, error) {
+func (s server) ReadUser(ctx context.Context, req *userservice.ReadUserRequest) (*userservice.ReadUserResponse, error) {
 	userID := req.GetUserId()
-	// userName := req.GetUserName()
-	row, err := s.Usecase.Read(userID)
+	row, err := s.Usecase.GetUserByUserID(userID)
+	followUsers := s.Usecase.GetFollowUsersByID(userID)
+
 	if err != nil {
 		return nil, err
 	}
-	user := &user_grpc.User{
-		UserId: row.UserID,
-	}
-	res := &user_grpc.ReadUserResponse{
-		User: user,
+	user := makeGrpcUserProfile(&row, followUsers)
+	res := &userservice.ReadUserResponse{
+		Profile: user,
 	}
 	return res, nil
 }
 
-func (s server) UpdateUser(ctx context.Context, req *user_grpc.UpdateUserRequest) (*user_grpc.UpdateUserResponse, error) {
-	postData := req.GetUser()
-	validate := validator.New()
-
+func (s server) UpdateUser(ctx context.Context, req *userservice.UpdateUserRequest) (*userservice.UpdateUserResponse, error) {
 	user := makeModel(req.GetUser())
 
-	// User構造体のバリデーション
-	if error := validate.Struct(user); error != nil {
-		return nil, error
+	// 既に同一のemailによる登録がないかチェック
+	if s.userExistsByEmail(user.Email) == true {
+		return s.makeUpdateUserResponse(StatusEmailAlreadyUsed), nil
 	}
 
 	if _, err := s.Usecase.Update(user); err != nil {
 		return nil, err
 	}
-	res := &user_grpc.UpdateUserResponse{
-		User: postData,
-	}
-	return res, nil
+
+	return s.makeUpdateUserResponse(StatusUpdateUserSuccess), nil
 }
 
 // userExistsByEmail Emailが登録されているユーザーが存在するかの判定
@@ -244,77 +114,145 @@ func (s server) userExistsByEmail(email string) bool {
 		return false
 	}
 	user, _ := s.Usecase.GetUserByEmail(email)
-	if user.UserID == 0 {
+	if user.ID == 0 {
 		return false
 	}
 	return true
 }
 
-func makeModel(gUser *user_grpc.User) *model.User {
+func makeModel(gUser *userservice.User) *model.User {
 	user := &model.User{
-		UserID:   gUser.GetUserId(),
-		UserName: gUser.GetUserName(),
-		Password: gUser.GetPassword(),
-		Email:    gUser.GetEmail(),
+		ID:        gUser.GetUserId(),
+		UserName:  gUser.GetUserName(),
+		Password:  gUser.GetPassword(),
+		Email:     gUser.GetEmail(),
+		Authority: gUser.GetAuthority(),
 	}
+
 	return user
 }
 
-func makeGrpcUser(user *model.User) *user_grpc.User {
-	gUser := &user_grpc.User{
-		UserId:   user.UserID,
-		UserName: user.UserName,
-		Password: user.Password,
-		Email:    user.Password,
+func makeGrpcUser(user *model.User) *userservice.User {
+	gUser := &userservice.User{
+		UserId:    user.ID,
+		UserName:  user.UserName,
+		Password:  user.Password,
+		Email:     user.Email,
+		Authority: user.Authority,
 	}
 	return gUser
 }
 
-func makeValidationStatus(err validator.FieldError) string {
-	var code string = ""
-	var field string = err.Field()
-	var validationTag string = err.ActualTag()
-
-	// Emailバリデーションエラー時
-	if field == "Email" {
-		code = StatusEmailInputInvalid
-	} else if field == "UserName" {
-		// UserNameの文字数が不適の場合
-		for _, v := range []string{"min", "max"} {
-			if v == validationTag {
-				code = StatusUsernameNumError
-				break
-			}
-		}
-	} else {
-		code = "unexpected error"
+func makeGrpcUserProfile(user *model.User, followUsers []uint32) *userservice.UserProfile {
+	gUser := &userservice.UserProfile{
+		UserId:      user.ID,
+		UserName:    user.UserName,
+		ProfileText: user.ProfileText,
+		Authority:   user.Authority,
+		FollowUsers: followUsers,
 	}
+	return gUser
+}
 
-	return code
+func makeGrpcAuth(auth *model.Auth) *userservice.Auth {
+	gAuth := &userservice.Auth{
+		Token:     auth.Token,
+		UserId:    auth.UserID,
+		Authority: auth.Authority,
+	}
+	return gAuth
 }
 
 // ログイン
 // Email, Passwordの組み合わせで認証を行う
-func (s server) Login(ctx context.Context, req *user_grpc.LoginRequest) (*user_grpc.LoginResponse, error) {
+func (s server) Login(ctx context.Context, req *userservice.LoginRequest) (*userservice.LoginResponse, error) {
 	if s.userExistsByEmail(req.GetEmail()) != true {
-		return s.makeLoginResponse("", ""), nil
+		return s.makeLoginResponse(&userservice.Auth{Token: "", UserId: zero}, &userservice.User{UserId: zero, UserName: ""}), errors.New("user not found")
 	}
 	auth, err := s.Usecase.LoginAuth(req.GetEmail(), req.GetPassword())
+	user, err := s.Usecase.GetUserByUserID(auth.UserID)
 	if err != nil {
-		return s.makeLoginResponse("", ""), err
+		return s.makeLoginResponse(&userservice.Auth{Token: "", UserId: zero}, &userservice.User{UserId: zero, UserName: ""}), err
 	}
 
-	return s.makeLoginResponse(auth.Token, auth.Email), nil
+	return s.makeLoginResponse(makeGrpcAuth(auth), makeGrpcUser(&user)), nil
 }
 
-// makeCreateResponse CreateUserメソッドのresponseを生成し返す
-func (s server) makeCreateResponse(user *user_grpc.User, statusCode string) *user_grpc.CreateUserResponse {
-	res := &user_grpc.CreateUserResponse{}
-	if user != nil {
-		res.User = user
+// ゲストユーザーログイン
+func (s server) GuestLogin(ctx context.Context, req *userservice.GuestLoginRequest) (*userservice.LoginResponse, error) {
+	// ゲストアカウントを作成し、認証情報を取得
+	auth, err := s.Usecase.CreateDemoUser()
+	// 認証情報を元にユーザー情報を取得
+	user, err := s.Usecase.GetUserByUserID(auth.UserID)
+
+	if err != nil {
+		return s.makeLoginResponse(&userservice.Auth{Token: "", UserId: zero}, &userservice.User{UserId: zero, UserName: ""}), err
 	}
+
+	return s.makeLoginResponse(makeGrpcAuth(auth), makeGrpcUser(&user)), nil
+}
+
+// 管理者ユーザーログイン
+func (s server) SuperUserLogin(ctx context.Context, req *userservice.SuperUserLoginRequest) (*userservice.LoginResponse, error) {
+	// 管理アカウントを作成し、認証情報を取得
+	auth, err := s.Usecase.CreateDemoSuperUser()
+	// 認証情報を元にユーザー情報を取得
+	user, err := s.Usecase.GetUserByUserID(auth.UserID)
+
+	if err != nil {
+		return s.makeLoginResponse(&userservice.Auth{Token: "", UserId: zero}, &userservice.User{UserId: zero, UserName: ""}), err
+	}
+
+	return s.makeLoginResponse(makeGrpcAuth(auth), makeGrpcUser(&user)), nil
+}
+
+func (s server) TokenAuth(ctx context.Context, req *userservice.TokenAuthRequest) (*userservice.TokenAuthResponse, error) {
+	// tokenからidを取り出す
+	id, err := authorization.ParseToken(req.GetToken())
+	if err != nil {
+		return nil, err
+	}
+	user, err := s.Usecase.GetUserByUserID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &userservice.TokenAuthResponse{
+		User: makeGrpcUser(&user),
+	}, nil
+}
+
+func (s server) FollowUser(ctx context.Context, req *userservice.FollowUserRequet) (*userservice.FollowUserResponse, error) {
+	relation := &model.Relation{
+		FollowerUserID: req.GetFollwerUserId(),
+		FollowedUserID: req.GetFollwedUserId(),
+	}
+
+	if _, err := s.Usecase.Follow(relation); err != nil {
+		return nil, err
+	}
+
+	return &userservice.FollowUserResponse{Status: &userservice.ResponseStatus{Code: StatusFollowSuccess}}, nil
+}
+
+func (s server) UnFollowUser(ctx context.Context, req *userservice.UnFollowUserRequet) (*userservice.UnFollowUserResponse, error) {
+	relation := &model.Relation{
+		FollowerUserID: req.GetFollwerUserId(),
+		FollowedUserID: req.GetFollwedUserId(),
+	}
+
+	if _, err := s.Usecase.UnFollow(relation); err != nil {
+		return nil, err
+	}
+
+	return &userservice.UnFollowUserResponse{Status: &userservice.ResponseStatus{Code: StatusUnFollowSuccess}}, nil
+}
+
+// makeCreateUserResponse CreateUserメソッドのresponseを生成し返す
+func (s server) makeCreateUserResponse(statusCode string) *userservice.CreateUserResponse {
+	res := &userservice.CreateUserResponse{}
 	if statusCode != "" {
-		responseStatus := &user_grpc.ResponseStatus{
+		responseStatus := &userservice.ResponseStatus{
 			Code: statusCode,
 		}
 		res.Status = responseStatus
@@ -322,10 +260,27 @@ func (s server) makeCreateResponse(user *user_grpc.User, statusCode string) *use
 	return res
 }
 
-// makeLoginResponse CLoginメソッドのresponseを生成し返す
-func (s server) makeLoginResponse(token string, email string) *user_grpc.LoginResponse {
-	return &user_grpc.LoginResponse{
-		Token: token,
-		Email: email,
+// makeUpdateUserResponse UpdateUserメソッドのresponseを生成し返す
+func (s server) makeUpdateUserResponse(statusCode string) *userservice.UpdateUserResponse {
+	res := &userservice.UpdateUserResponse{}
+	if statusCode != "" {
+		responseStatus := &userservice.ResponseStatus{
+			Code: statusCode,
+		}
+		res.Status = responseStatus
 	}
+	return res
+}
+
+// makeLoginResponse Loginメソッドのresponseを生成し返す
+func (s server) makeLoginResponse(auth *userservice.Auth, user *userservice.User) *userservice.LoginResponse {
+	return &userservice.LoginResponse{
+		Auth: auth,
+		User: user,
+	}
+}
+
+// makeErrorLoginResponse Loginメソッドがエラー時のresponseを生成し返す
+func (s server) makeErrorLoginResponse() *userservice.LoginResponse {
+	return s.makeLoginResponse(&userservice.Auth{Token: "", UserId: zero}, &userservice.User{UserId: zero, UserName: ""})
 }
