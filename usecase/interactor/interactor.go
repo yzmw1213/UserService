@@ -6,9 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"strconv"
 
 	"github.com/yzmw1213/UserService/authorization"
+	"github.com/yzmw1213/UserService/grpc/postservice"
+	"google.golang.org/grpc"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/yzmw1213/UserService/db"
@@ -103,6 +106,11 @@ func (i *UserInteractor) DeleteByID(id uint32) error {
 		db.EndRollback()
 		return err
 	}
+	if err = deletePostsCommentsByUserID(id); err != nil {
+		db.EndRollback()
+		return err
+	}
+
 	// トランザクションを終了しコミット
 	db.EndCommit()
 	return nil
@@ -398,4 +406,23 @@ func countFollowUserByFollower(ID uint32) int {
 	DB.Where("follower_user_id = ?", ID).Model(&relation).Count(&count)
 
 	return count
+}
+
+// deletePostsByUserID 退会したユーザーの投稿・コメントを削除
+func deletePostsCommentsByUserID(userID uint32) error {
+	postURL := os.Getenv("POST_URL")
+	cc, err := grpc.Dial(postURL, grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("could not connect: %v", err)
+	}
+
+	defer cc.Close()
+	postClient := postservice.NewPostServiceClient(cc)
+
+	request := &postservice.DeletePostsCommentsByUserIDRequest{
+		CreateUserId: userID,
+	}
+
+	_, err = postClient.DeletePostsCommentsByUserID(context.Background(), request)
+	return err
 }

@@ -25,6 +25,8 @@ const (
 	StatusFollowSuccess string = "FOLLOW_SUCCESS"
 	// StatusUnFollowSuccess フォロー解除成功ステータス
 	StatusUnFollowSuccess string = "UNFOLLOW_SUCCESS"
+	// StatusDeleteUserSuccess ユーザ削除成功ステータス
+	StatusDeleteUserSuccess string = "USER_DELETE_SUCCESS"
 	// zero ユーザーIDのゼロ値
 	zero uint32 = 0
 )
@@ -57,7 +59,11 @@ func (s server) DeleteUser(ctx context.Context, req *userservice.DeleteUserReque
 	if err := s.Usecase.DeleteByID(user.ID); err != nil {
 		return nil, err
 	}
-	res := &userservice.DeleteUserResponse{}
+	res := &userservice.DeleteUserResponse{
+		Status: &userservice.ResponseStatus{
+			Code: StatusDeleteUserSuccess,
+		},
+	}
 	return res, nil
 }
 
