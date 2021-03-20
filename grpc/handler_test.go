@@ -246,7 +246,7 @@ func TestCreateUserNameTooShort(t *testing.T) {
 	client := userservice.NewUserServiceClient(conn)
 
 	createUser = &userservice.User{
-		UserName: "demou",
+		UserName: "de",
 		Password: "demopassword",
 		Email:    "tooshort@gmail.com",
 	}

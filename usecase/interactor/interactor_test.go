@@ -199,7 +199,7 @@ func TestUpdate(t *testing.T) {
 	inputUser := findUser
 
 	inputUser.UserName = updatedName
-	inputUser.Password = "password"
+	inputUser.Password = ""
 
 	updatedUser, err := i.Update(&inputUser)
 
@@ -221,7 +221,7 @@ func TestUpdateNameNull(t *testing.T) {
 	inputUser := findUser
 
 	inputUser.UserName = ""
-	inputUser.Password = "password"
+	inputUser.Password = ""
 
 	_, err = i.Update(&inputUser)
 	assert.NotEqual(t, nil, err)
@@ -234,7 +234,7 @@ func TestUpdateNameTooLong(t *testing.T) {
 	inputUser := findUser
 
 	inputUser.UserName = "testusertestusert"
-	inputUser.Password = "password"
+	inputUser.Password = ""
 
 	_, err = i.Update(&inputUser)
 	assert.NotEqual(t, nil, err)
@@ -246,8 +246,8 @@ func TestUpdateNameTooShort(t *testing.T) {
 	assert.Equal(t, nil, err)
 	inputUser := findUser
 
-	inputUser.UserName = "testu"
-	inputUser.Password = "password"
+	inputUser.UserName = "te"
+	inputUser.Password = ""
 
 	_, err = i.Update(&inputUser)
 	assert.NotEqual(t, nil, err)
@@ -260,7 +260,7 @@ func TestUpdateUserEmailUsed(t *testing.T) {
 	inputUser := findUser
 
 	inputUser.Email = testemail
-	inputUser.Password = "password"
+	inputUser.Password = ""
 
 	_, err = i.Update(&inputUser)
 	assert.NotEqual(t, nil, err)

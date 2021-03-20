@@ -164,19 +164,20 @@ func listAll(ctx context.Context) ([]model.User, error) {
 
 // Update ユーザを更新する
 func (i *UserInteractor) Update(postData *model.User) (*model.User, error) {
+	validate = validator.New()
 	DB := db.GetDB()
 	// postされたIdに紐づくuserを取得
 	id := postData.ID
 	findUser := &model.User{}
 
-	// User構造体のバリデーション
-	if err := validate.Struct(postData); err != nil {
-		return postData, err
-	}
-
 	if err := DB.Where("id = ?", id).First(&findUser).Error; err != nil {
 		log.Fatalf("err: %v", err)
 		return findUser, err
+	}
+
+	// User構造体のバリデーション
+	if err := validate.Struct(postData); err != nil {
+		return postData, err
 	}
 
 	updateUser := postData
@@ -185,13 +186,14 @@ func (i *UserInteractor) Update(postData *model.User) (*model.User, error) {
 	if i.OtherUserExistsByEmail(updateUser.Email, updateUser.ID) == true {
 		return postData, errors.New("email already used")
 	}
-	// パスワードをhash
-	hash, err := createHashPassword(postData.Password)
-	// hashしたパスワードをSaveするuserにセット
-	updateUser.Password = string(hash)
-
-	if err != nil {
-		return updateUser, err
+	if postData.Password != "" {
+		// // パスワードをhash
+		hash, err := createHashPassword(postData.Password)
+		// hashしたパスワードをSaveするuserにセット
+		updateUser.Password = string(hash)
+		if err != nil {
+			return updateUser, err
+		}
 	}
 
 	updateUser.ID = findUser.ID
@@ -199,7 +201,7 @@ func (i *UserInteractor) Update(postData *model.User) (*model.User, error) {
 	// トランザクション開始
 	tx := db.StartBegin()
 
-	if err := tx.Save(updateUser).Error; err != nil {
+	if err := tx.Model(&user).Update(&postData).Error; err != nil {
 		db.EndRollback()
 		return updateUser, err
 	}
