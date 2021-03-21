@@ -25,6 +25,8 @@ const (
 	StatusFollowSuccess string = "FOLLOW_SUCCESS"
 	// StatusUnFollowSuccess フォロー解除成功ステータス
 	StatusUnFollowSuccess string = "UNFOLLOW_SUCCESS"
+	// StatusDeleteUserSuccess ユーザ削除成功ステータス
+	StatusDeleteUserSuccess string = "USER_DELETE_SUCCESS"
 	// zero ユーザーIDのゼロ値
 	zero uint32 = 0
 )
@@ -33,7 +35,7 @@ func (s server) CreateUser(ctx context.Context, req *userservice.CreateUserReque
 	user := makeModel(req.GetUser())
 
 	// 既に同一のemailによる登録がないかチェック
-	if s.userExistsByEmail(user.Email) == true {
+	if s.userExistsByEmail(zero, user.Email) == true {
 		return s.makeCreateUserResponse(StatusEmailAlreadyUsed), nil
 	}
 
@@ -57,7 +59,11 @@ func (s server) DeleteUser(ctx context.Context, req *userservice.DeleteUserReque
 	if err := s.Usecase.DeleteByID(user.ID); err != nil {
 		return nil, err
 	}
-	res := &userservice.DeleteUserResponse{}
+	res := &userservice.DeleteUserResponse{
+		Status: &userservice.ResponseStatus{
+			Code: StatusDeleteUserSuccess,
+		},
+	}
 	return res, nil
 }
 
@@ -97,7 +103,7 @@ func (s server) UpdateUser(ctx context.Context, req *userservice.UpdateUserReque
 	user := makeModel(req.GetUser())
 
 	// 既に同一のemailによる登録がないかチェック
-	if s.userExistsByEmail(user.Email) == true {
+	if s.userExistsByEmail(user.ID, user.Email) == true {
 		return s.makeUpdateUserResponse(StatusEmailAlreadyUsed), nil
 	}
 
@@ -109,7 +115,7 @@ func (s server) UpdateUser(ctx context.Context, req *userservice.UpdateUserReque
 }
 
 // userExistsByEmail Emailが登録されているユーザーが存在するかの判定
-func (s server) userExistsByEmail(email string) bool {
+func (s server) userExistsByEmail(id uint32, email string) bool {
 	if email == "" {
 		return false
 	}
@@ -117,7 +123,7 @@ func (s server) userExistsByEmail(email string) bool {
 	if user.ID == 0 {
 		return false
 	}
-	return true
+	return user.ID > 0 && user.ID != id
 }
 
 func makeModel(gUser *userservice.User) *model.User {
@@ -166,7 +172,7 @@ func makeGrpcAuth(auth *model.Auth) *userservice.Auth {
 // ログイン
 // Email, Passwordの組み合わせで認証を行う
 func (s server) Login(ctx context.Context, req *userservice.LoginRequest) (*userservice.LoginResponse, error) {
-	if s.userExistsByEmail(req.GetEmail()) != true {
+	if s.userExistsByEmail(zero, req.GetEmail()) != true {
 		return s.makeLoginResponse(&userservice.Auth{Token: "", UserId: zero}, &userservice.User{UserId: zero, UserName: ""}), errors.New("user not found")
 	}
 	auth, err := s.Usecase.LoginAuth(req.GetEmail(), req.GetPassword())

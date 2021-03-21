@@ -6,9 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"strconv"
 
 	"github.com/yzmw1213/UserService/authorization"
+	"github.com/yzmw1213/UserService/grpc/postservice"
+	"google.golang.org/grpc"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/yzmw1213/UserService/db"
@@ -103,6 +106,11 @@ func (i *UserInteractor) DeleteByID(id uint32) error {
 		db.EndRollback()
 		return err
 	}
+	if err = deletePostsCommentsByUserID(id); err != nil {
+		db.EndRollback()
+		return err
+	}
+
 	// トランザクションを終了しコミット
 	db.EndCommit()
 	return nil
@@ -164,19 +172,20 @@ func listAll(ctx context.Context) ([]model.User, error) {
 
 // Update ユーザを更新する
 func (i *UserInteractor) Update(postData *model.User) (*model.User, error) {
+	validate = validator.New()
 	DB := db.GetDB()
 	// postされたIdに紐づくuserを取得
 	id := postData.ID
 	findUser := &model.User{}
 
-	// User構造体のバリデーション
-	if err := validate.Struct(postData); err != nil {
-		return postData, err
-	}
-
 	if err := DB.Where("id = ?", id).First(&findUser).Error; err != nil {
 		log.Fatalf("err: %v", err)
 		return findUser, err
+	}
+
+	// User構造体のバリデーション
+	if err := validate.Struct(postData); err != nil {
+		return postData, err
 	}
 
 	updateUser := postData
@@ -185,13 +194,14 @@ func (i *UserInteractor) Update(postData *model.User) (*model.User, error) {
 	if i.OtherUserExistsByEmail(updateUser.Email, updateUser.ID) == true {
 		return postData, errors.New("email already used")
 	}
-	// パスワードをhash
-	hash, err := createHashPassword(postData.Password)
-	// hashしたパスワードをSaveするuserにセット
-	updateUser.Password = string(hash)
-
-	if err != nil {
-		return updateUser, err
+	if postData.Password != "" {
+		// // パスワードをhash
+		hash, err := createHashPassword(postData.Password)
+		// hashしたパスワードをSaveするuserにセット
+		updateUser.Password = string(hash)
+		if err != nil {
+			return updateUser, err
+		}
 	}
 
 	updateUser.ID = findUser.ID
@@ -199,7 +209,7 @@ func (i *UserInteractor) Update(postData *model.User) (*model.User, error) {
 	// トランザクション開始
 	tx := db.StartBegin()
 
-	if err := tx.Save(updateUser).Error; err != nil {
+	if err := tx.Model(&user).Update(&postData).Error; err != nil {
 		db.EndRollback()
 		return updateUser, err
 	}
@@ -396,4 +406,23 @@ func countFollowUserByFollower(ID uint32) int {
 	DB.Where("follower_user_id = ?", ID).Model(&relation).Count(&count)
 
 	return count
+}
+
+// deletePostsByUserID 退会したユーザーの投稿・コメントを削除
+func deletePostsCommentsByUserID(userID uint32) error {
+	postURL := os.Getenv("POST_URL")
+	cc, err := grpc.Dial(postURL, grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("could not connect: %v", err)
+	}
+
+	defer cc.Close()
+	postClient := postservice.NewPostServiceClient(cc)
+
+	request := &postservice.DeletePostsCommentsByUserIDRequest{
+		CreateUserId: userID,
+	}
+
+	_, err = postClient.DeletePostsCommentsByUserID(context.Background(), request)
+	return err
 }

@@ -199,7 +199,7 @@ func TestUpdate(t *testing.T) {
 	inputUser := findUser
 
 	inputUser.UserName = updatedName
-	inputUser.Password = "password"
+	inputUser.Password = ""
 
 	updatedUser, err := i.Update(&inputUser)
 
@@ -221,7 +221,7 @@ func TestUpdateNameNull(t *testing.T) {
 	inputUser := findUser
 
 	inputUser.UserName = ""
-	inputUser.Password = "password"
+	inputUser.Password = ""
 
 	_, err = i.Update(&inputUser)
 	assert.NotEqual(t, nil, err)
@@ -234,7 +234,7 @@ func TestUpdateNameTooLong(t *testing.T) {
 	inputUser := findUser
 
 	inputUser.UserName = "testusertestusert"
-	inputUser.Password = "password"
+	inputUser.Password = ""
 
 	_, err = i.Update(&inputUser)
 	assert.NotEqual(t, nil, err)
@@ -246,8 +246,8 @@ func TestUpdateNameTooShort(t *testing.T) {
 	assert.Equal(t, nil, err)
 	inputUser := findUser
 
-	inputUser.UserName = "testu"
-	inputUser.Password = "password"
+	inputUser.UserName = "te"
+	inputUser.Password = ""
 
 	_, err = i.Update(&inputUser)
 	assert.NotEqual(t, nil, err)
@@ -260,7 +260,7 @@ func TestUpdateUserEmailUsed(t *testing.T) {
 	inputUser := findUser
 
 	inputUser.Email = testemail
-	inputUser.Password = "password"
+	inputUser.Password = ""
 
 	_, err = i.Update(&inputUser)
 	assert.NotEqual(t, nil, err)
@@ -423,45 +423,45 @@ func TestLoginAuthEmailNull(t *testing.T) {
 }
 
 // TestDeleteNotExistsUser 登録のないユーザを削除する異常系
-func TestDeleteNotExistsUser(t *testing.T) {
-	var i UserInteractor
-	var deleteUser *model.User
+// func TestDeleteNotExistsUser(t *testing.T) {
+// 	var i UserInteractor
+// 	var deleteUser *model.User
 
-	var u model.User
-	countBeforeDelete, err := i.Count(u)
-	assert.Equal(t, nil, err)
+// 	var u model.User
+// 	countBeforeDelete, err := i.Count(u)
+// 	assert.Equal(t, nil, err)
 
-	findUser, err := i.GetUserByEmail("notused@gmail.com")
-	assert.NotEqual(t, nil, err)
+// 	findUser, err := i.GetUserByEmail("notused@gmail.com")
+// 	assert.NotEqual(t, nil, err)
 
-	deleteUser = &findUser
-	deleteUser.ID = 10000
+// 	deleteUser = &findUser
+// 	deleteUser.ID = 10000
 
-	err = i.DeleteByID(10000)
-	assert.Equal(t, nil, err)
+// 	err = i.DeleteByID(10000)
+// 	assert.Equal(t, nil, err)
 
-	countAfterDelete, err := i.Count(u)
-	assert.Equal(t, nil, err)
-	assert.Equal(t, countBeforeDelete, countAfterDelete)
-}
+// 	countAfterDelete, err := i.Count(u)
+// 	assert.Equal(t, nil, err)
+// 	assert.Equal(t, countBeforeDelete, countAfterDelete)
+// }
 
-func TestDelete(t *testing.T) {
-	var i UserInteractor
-	var deleteUser *model.User
-	findUser, err := i.GetUserByEmail(testemail)
-	assert.Equal(t, nil, err)
+// func TestDelete(t *testing.T) {
+// 	var i UserInteractor
+// 	var deleteUser *model.User
+// 	findUser, err := i.GetUserByEmail(testemail)
+// 	assert.Equal(t, nil, err)
 
-	deleteUser = &findUser
+// 	deleteUser = &findUser
 
-	err = i.DeleteByID(deleteUser.ID)
-	assert.Equal(t, nil, err)
+// 	err = i.DeleteByID(deleteUser.ID)
+// 	assert.Equal(t, nil, err)
 
-	findUser, err = i.GetUserByEmail(testemail)
-	assert.NotEqual(t, nil, err)
-	assert.Equal(t, zero, findUser.ID)
-	assert.Equal(t, "", findUser.UserName)
-	assert.Equal(t, "", findUser.Email)
-}
+// 	findUser, err = i.GetUserByEmail(testemail)
+// 	assert.NotEqual(t, nil, err)
+// 	assert.Equal(t, zero, findUser.ID)
+// 	assert.Equal(t, "", findUser.UserName)
+// 	assert.Equal(t, "", findUser.Email)
+// }
 
 func TestGetMaxUserID(t *testing.T) {
 	maxID := getMaxUserID()

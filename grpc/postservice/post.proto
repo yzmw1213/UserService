@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package postservice;
+
+option go_package = ".;postservice";
+
+// レスポンスのステータス
+message ResponseStatus{
+  string code =1;
+}
+
+message DeletePostsCommentsByUserIDRequest {
+  uint32 create_user_id=1;
+}
+
+message DeletePostsCommentsByUserIDResponse {
+  ResponseStatus status=1;
+}
+
+service PostService {
+  rpc DeletePostsCommentsByUserID(DeletePostsCommentsByUserIDRequest) returns (DeletePostsCommentsByUserIDResponse);
+}
